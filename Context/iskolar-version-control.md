@@ -11,7 +11,7 @@ _A practical, error-avoidant git workflow for a solo-dev, portfolio-grade reposi
 ## 0. Scope & Assumptions
 
 - `[ASSUMPTION]` **Solo dev today, possible collaborators later.** Rules are written to be safe for one person working directly on `main`, but forward-compatible with a PR-review workflow once others join (§10).
-- `[ASSUMPTION]` **No CI/CD configured yet.** The checklist in §7 is manual until lint/test/build scripts and a CI pipeline exist (post P0/P1 of the MVP plan). Update this doc when CI lands — don't let it go stale.
+- `[ASSUMPTION]` **No CI/CD configured yet.** As of P0, `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` all exist and must be run manually before every push (§7) — there is still no pipeline enforcing this automatically. Update this doc again when CI lands — don't let it go stale.
 - `[ASSUMPTION]` **`main` is the only long-lived branch today.** Feature branches are optional at this repo size but recommended once concurrent work streams appear (e.g., admin tool + reminders in parallel).
 - `[ASSUMPTION]` Secrets (Supabase service-role key, Resend key, cron secret) will exist once the app is scaffolded. This doc's secrets guidance (§5) is written pre-emptively so the first `.env` never touches git history.
 
@@ -139,7 +139,7 @@ Run this before **every** commit and again before every push — not just at mil
 
 **Before commit:** 4. Stage specific files by name — avoid `git add -A`/`git add .` on anything touching config or env-shaped files; it's how secrets sneak in. 5. Commit message follows §3's format and explains _why_.
 
-**Before push:** 6. `git log` — does the commit sequence about to be pushed read cleanly? No "wip," "fix typo," "actually fix" chains that should've been squashed on a feature branch. 7. Once build/lint/test scripts exist (post-scaffold): they pass locally. Don't push red. 8. Confirm target branch and remote (`git branch -vv`, `git remote -v`) — especially important once feature branches exist, to avoid pushing a feature branch's work directly onto `main`. 9. For anything schema/migration-related: has it been reviewed as a diff (SR-B3), not run ad hoc against a live database?
+**Before push:** 6. `git log` — does the commit sequence about to be pushed read cleanly? No "wip," "fix typo," "actually fix" chains that should've been squashed on a feature branch. 7. Run `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` locally — all must pass. Don't push red. If the change touches Supabase migrations, also run `npx supabase db reset` against a local stack (requires Docker Desktop) and confirm it applies with zero errors before pushing. 8. Confirm target branch and remote (`git branch -vv`, `git remote -v`) — especially important once feature branches exist, to avoid pushing a feature branch's work directly onto `main`. 9. For anything schema/migration-related: has it been reviewed as a diff (SR-B3), not run ad hoc against a live database?
 
 **After push:** 10. `git status` clean, `git log` matches what you expect on the remote (spot-check with `git log origin/main` if anything felt uncertain).
 
