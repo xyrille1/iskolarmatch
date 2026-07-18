@@ -6,12 +6,18 @@ import { StatusDot } from "@/components/ui/status-dot";
 import { OfficialLinkPill } from "@/components/detail/official-link-pill";
 import { Disclaimer } from "@/components/detail/disclaimer";
 import { RequirementChecklist } from "@/components/detail/requirement-checklist";
+import { SaveReminderControls } from "@/components/detail/save-reminder-controls";
 import { PillLink } from "@/components/ui/pill";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
+
+// Reads the caller's auth cookie to show Save/Set-reminder state -- never
+// statically prerenderable.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -30,6 +36,30 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
   if (!scholarship) notFound();
 
   const primaryCycle = scholarship.deadlineCycles[0];
+
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let isSaved = false;
+  let reminder: { leadDays: number } | null = null;
+
+  if (user) {
+    const { data: savedRow } = await supabase
+      .from("saved_scholarships")
+      .select("id")
+      .eq("scholarship_id", scholarship.id)
+      .maybeSingle();
+    isSaved = Boolean(savedRow);
+
+    const { data: reminderRow } = await supabase
+      .from("reminders")
+      .select("lead_days")
+      .eq("scholarship_id", scholarship.id)
+      .maybeSingle();
+    reminder = reminderRow ? { leadDays: reminderRow.lead_days } : null;
+  }
 
   return (
     <div className="mx-auto max-w-[62ch] px-6 py-12">
@@ -50,13 +80,19 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
         {verifiedEyebrowLabel(scholarship.lastVerifiedAt)}
       </p>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <PillLink href={`/auth?next=/s/${scholarship.slug}&action=save`} variant="outline">
-          Save
-        </PillLink>
-        <PillLink href={`/auth?next=/s/${scholarship.slug}&action=remind`} variant="outline">
-          Set reminder
-        </PillLink>
+      <div className="mt-6">
+        {user ? (
+          <SaveReminderControls scholarshipId={scholarship.id} isSaved={isSaved} reminder={reminder} />
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            <PillLink href={`/auth?next=/s/${scholarship.slug}`} variant="outline">
+              Save
+            </PillLink>
+            <PillLink href={`/auth?next=/s/${scholarship.slug}`} variant="outline">
+              Set reminder
+            </PillLink>
+          </div>
+        )}
       </div>
 
       {scholarship.description && (
