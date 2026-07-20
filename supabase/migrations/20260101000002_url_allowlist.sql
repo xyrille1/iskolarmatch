@@ -1,6 +1,6 @@
 -- Outbound-link domain allowlist, enforced at the database layer so even a
 -- compromised admin session can't publish a phishing URL. See
--- docs/SECURITY.md SR-D1/SR-D2/SR-I5. A trigger is used instead of a
+-- docs/SECURITY.md §3.2. A trigger is used instead of a
 -- plain CHECK because the validation needs a table lookup against curated
 -- foundation domains, not just gov.ph/edu.ph suffix matching.
 

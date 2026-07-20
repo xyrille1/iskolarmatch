@@ -1,6 +1,6 @@
 -- P5: admin role table + append-only audit log for privileged writes.
--- Per docs/SECURITY.md SR-A5/SR-A6 (admin authz via a trusted
--- server-side source, never a client claim) and SR-D3 (audit log).
+-- Per docs/SECURITY.md §3.4 (admin authz via a trusted
+-- server-side source, never a client claim) and §3.7 (audit log).
 
 create table admin_users (
   user_id    uuid primary key references auth.users(id) on delete cascade,

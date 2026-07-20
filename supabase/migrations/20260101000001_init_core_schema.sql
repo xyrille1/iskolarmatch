@@ -1,8 +1,8 @@
 -- Core schema for IskolarMatch P0: providers, scholarships, deadline cycles,
--- eligibility rules, requirements. See docs/DATABASE.md §4.4.
+-- eligibility rules, requirements. See docs/DATABASE.md §2.
 --
 -- student_profiles is intentionally NOT created here: docs/SECURITY.md
--- (PR1) overrides the technical design doc's schema and defers persisted student
+-- §1 (SEC-G1) overrides the technical design doc's schema and defers persisted student
 -- profiles out of MVP to avoid storing minors' RA 10173 sensitive personal
 -- information. Matching profile data is session-only, never persisted.
 -- saved_scholarships / reminders are deferred to P3/P4 (they depend on auth

@@ -1,7 +1,7 @@
 -- P3: saved scholarships and deadline reminders, owner-only via RLS.
 -- Deferred from P0 because they depend on auth.users, which only becomes
 -- meaningful once Supabase Auth (magic link) is wired up. See
--- docs/DATABASE.md §4.4.
+-- docs/DATABASE.md §2.
 
 create table saved_scholarships (
   id             uuid primary key default gen_random_uuid(),
