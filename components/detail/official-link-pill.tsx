@@ -3,7 +3,7 @@ import { isAllowlistedUrl } from "@/lib/security/url-allowlist";
 
 // Anti-phishing, made visible: always shows the destination domain beneath the
 // pill, rel="noopener noreferrer", allowlisted domains only (UX doc §5,
-// security doc SR-I5). This is a UI-layer defense-in-depth check on top of the
+// docs/SECURITY.md §3.2). This is a UI-layer defense-in-depth check on top of the
 // DB trigger that already guarantees official_url is allowlisted.
 export function OfficialLinkPill({ url, label }: { url: string; label: string }) {
   if (!isAllowlistedUrl(url)) return null;
