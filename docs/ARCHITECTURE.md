@@ -1,100 +1,90 @@
-# IskolarMatch — Technical Design Document (TDD)
+# IskolarMatch — Architecture
 
-_System architecture, matching engine, deadline job, API surface, and build sequence for the Philippine scholarship discovery and matching tool._
+_System architecture, matching engine, deadline job, and route/action map for the Philippine scholarship discovery and matching tool. Describes the **current implementation**, not just the original design — see §10 for where it has diverged from the initial plan._
 
 **Companion to:** `PRD.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`
-**Owner:** Xyrille · **Stack:** Next.js + TypeScript + Supabase (Postgres) + Tailwind
-**Status:** Draft v1 for build
+**Owner:** Xyrille · **Stack:** Next.js 16 (App Router) + TypeScript + Supabase (Postgres) + Tailwind
+**Status:** Reflects the app as built — update this doc alongside any structural code change, don't let it drift
 
 ---
 
-# 4. Technical Design Document (TDD)
+## 1. Overview
 
-## 4.1 Overview
+A read-heavy Next.js app over a Supabase Postgres database, matching `PRD.md` §4 (FR1–FR9; FR10 is Phase 2 and not built). The differentiating logic is a **deterministic matching engine** (`lib/matching/`) implemented as pure TypeScript functions — no I/O, no LLM, fully unit-tested. Scholarship data is human-curated through an admin tool; deadline status and reminder emails are recomputed by two daily **Vercel Cron**-triggered Route Handlers (not Supabase Edge Functions, see §6). There is no external service on the critical anonymous-match read path.
 
-A read-heavy Next.js web app over a Supabase Postgres database. The differentiating logic is a **deterministic matching engine** implemented as pure TypeScript functions (unit-testable, no I/O), wrapped by a server action. Scholarship data is human-curated through an admin tool; deadline status is recomputed by a daily scheduled job. There is deliberately **no external service on the critical read path** and **no LLM in the eligibility path**. AI appears only in Phase 2 as a source-change _detector_ that produces admin-reviewed suggestions.
-
-## 4.2 Tech Stack
+## 2. Tech Stack (as installed)
 
 ```
 Language:    TypeScript (strict)
-Framework:   Next.js (App Router, Server Components + Server Actions)
-Styling:     Tailwind CSS
+Framework:   Next.js 16.2.10 (App Router, Server Components + Server Actions), React 19.2.4
+Styling:     Tailwind CSS 4
 Database:    PostgreSQL via Supabase
-Auth:        Supabase Auth (email magic link)
-Security:    Supabase Row-Level Security (RLS) on all user-owned tables
-Validation:  Zod (shared client/server schemas)
-Data access: supabase-js (server client with service role only in server context)
-Scheduling:  Supabase scheduled Edge Function (or pg_cron) — daily status + reminders
-Email:       Resend (transactional reminders)
-Testing:     Vitest (unit/integration) + Playwright (e2e happy paths)
+Auth:        Supabase Auth (email magic link / OTP), session refreshed via proxy.ts (Next.js 16's
+             renamed middleware convention) — see SECURITY.md §3 for what it does and doesn't gate
+Security:    Supabase Row-Level Security (RLS) on every table — see DATABASE.md §5
+Validation:  Zod 4 (.strict() schemas), shared under lib/types/
+Data access: @supabase/ssr 0.12.3 + @supabase/supabase-js 2.110.7 (server client; service-role
+             client only in server actions / route handlers, never shipped to the browser)
+Scheduling:  Vercel Cron → Next.js Route Handlers (app/api/cron/*), not pg_cron/Edge Functions
+Email:       Resend 6.17.2 (transactional reminders)
+Testing:     Vitest 4 (unit) + Playwright 1.61 (e2e, DB-independent pages only — see §9)
 Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
-Reason:      Matches the owner's stack; deterministic core needs no heavy infra;
-             Supabase RLS gives per-user security without a custom backend.
 ```
 
-## 4.3 System Architecture
+## 3. Route Map (`app/`)
 
-```
-                          ┌─────────────────────────────────────────┐
-                          │              Next.js (Vercel)            │
-                          │                                          │
-  Student (mobile) ─────▶ │  Public routes (Server Components)       │
-                          │   /            landing                   │
-                          │   /match       profile form → results    │
-                          │   /s/[slug]    scholarship detail (SSR)   │
-                          │                                          │
-                          │  Server Actions                          │
-                          │   matchProfile()  ── calls ──▶ matching/ │◀── pure, tested
-                          │   saveScholarship()                      │      (no I/O)
-                          │   setReminder()                          │
-                          │                                          │
-                          │  Auth'd routes                           │
-                          │   /saved       saved list                │
-                          │                                          │
-                          │  Admin routes (role-gated)               │
-                          │   /admin/*     CRUD + mark verified      │
-                          └───────────────┬──────────────────────────┘
-                                          │ supabase-js
-                                          ▼
-                          ┌─────────────────────────────────────────┐
-                          │            Supabase (Postgres)           │
-                          │  public read:  providers, scholarships,  │
-                          │                eligibility_rules,        │
-                          │                requirements, cycles      │
-                          │  RLS (owner):  student_profiles,         │
-                          │                saved_scholarships,       │
-                          │                reminders                 │
-                          │  admin only:   ingestion_suggestions,    │
-                          │                source_watch              │
-                          └───────────────┬──────────────────────────┘
-                                          ▲
-                    daily schedule        │ writes status / queues reminders
-                          ┌───────────────┴──────────────────────────┐
-                          │   Scheduled Edge Function (cron, daily)   │
-                          │   1) recompute scholarship deadline status│
-                          │   2) find saved+due reminders → Resend    │
-                          └───────────────────────────────────────────┘
+**Public (Server Components, no auth)**
+| Route | Notes |
+| --- | --- |
+| `/` | Landing page, static |
+| `/about` | "How it works," static |
+| `/privacy` | RA 10173 privacy notice, static |
+| `/match` | Server wrapper around client `match-experience.tsx` (form → results); calls `submitProfileForm` |
+| `/s/[slug]` | Scholarship detail, `force-dynamic` (reads auth cookie to show save/reminder state) |
 
-   ── Phase 2 (post-MVP), isolated from the read path ──
-                          ┌───────────────────────────────────────────┐
-                          │   Source-Watcher Edge Function (weekly)    │
-                          │   fetch official_url → hash/diff →         │
-                          │   LLM extract candidate fields →           │
-                          │   INSERT ingestion_suggestions(status=     │
-                          │   'pending')  ── NEVER publishes ──        │
-                          └──────────────┬────────────────────────────┘
-                                         ▼  admin reviews in /admin
-                                   approve → writes verified record
-```
+**Auth**
+| Route | Notes |
+| --- | --- |
+| `/auth` | Sign-in page; client `auth-form.tsx` calls `requestMagicLink` |
+| `/auth/confirm` (Route Handler) | Verifies Supabase OTP (`token_hash`+`type`), redirects to a sanitized same-site `next` path |
 
-**Data flow (match):** student fills form → `matchProfile(profile)` server action → loads active scholarships + their eligibility rules → pure `evaluate()` buckets each into eligible/near-miss/not-eligible with matched-reasons → returns ranked-by-deadline result → rendered server-side. No personal data written unless the student later signs in and saves.
+**Session-gated**
+| Route | Notes |
+| --- | --- |
+| `/saved` | `force-dynamic`; redirects to `/auth?next=/saved` if signed out; lists saved scholarships |
 
-## 4.5 Matching Engine (the core — deterministic, pure, tested)
+**Admin (role-gated, `force-dynamic`)**
+| Route | Notes |
+| --- | --- |
+| `/admin` | Scholarship dashboard + inline "mark verified" action |
+| `/admin/providers` | Provider list + add-provider form |
+| `/admin/scholarships/new` | New scholarship form |
+| `/admin/scholarships/[id]/edit` | Edit scholarship + nested eligibility-rules / requirements / deadline-cycles panels |
 
-**Contract:**
+Every admin route calls `requireAdmin()` (`lib/auth/require-admin.ts`) individually at the top — **there is no centralized gate**. See §10 and `SECURITY.md` §4 for why that's a documented gap, not an oversight.
 
-```
+**Cron Route Handlers (`app/api/cron/`)**
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `refresh-deadlines` | GET | Recompute `deadline_cycles.status` (FR5) |
+| `send-reminders` | GET | Send due reminder emails via Resend (FR8) |
+
+Both require a `CRON_SECRET` bearer token (`lib/security/verify-cron-secret.ts`); scheduled by `vercel.json` (see §6, `DEPLOYMENT.md` §3).
+
+## 4. Server Actions (`lib/actions/`)
+
+| File | Actions | Auth | Notes |
+| --- | --- | --- | --- |
+| `match-profile.ts` | `matchProfile(profile)`, `submitProfileForm(prevState, formData)` | Public | Rate-limited 20 req/60s per IP; loads published scholarships + rules via anon client; delegates to pure `buildScholarshipMatches`; writes nothing (FR1, FR2) |
+| `auth.ts` | `requestMagicLink(prevState, formData)` | Public | Rate-limited 5 req/60s per IP; sanitizes `next` redirect to same-site only (FR6) |
+| `saved.ts` | `saveScholarship`, `unsaveScholarship`, `setReminder`, `cancelReminder`, `setReminderFormAction` | Session required (`requireUserId`) | User-scoped via session, never a caller-supplied user ID; `setReminder` computes `remind_on` from the soonest open deadline cycle, upserts idempotently (FR7, FR8) |
+| `admin.ts` | `upsertScholarship`, `markVerified`, `addEligibilityRule`/`deleteEligibilityRule`, `addRequirement`/`deleteRequirement`, `addDeadlineCycle`/`deleteDeadlineCycle`, `upsertProvider`, + FormData wrappers | `requireAdmin()` on every function | Uses the service-role client (bypasses RLS); every mutation writes an `audit_log` row via `logAudit()` (FR9) |
+
+## 5. Matching Engine (`lib/matching/`) — pure, deterministic, tested
+
+**Contract** (`lib/types/profile.ts`):
+
+```ts
 type ProfileField = 'education_level' | 'year_level' | 'gwa' | 'course_field'
   | 'region' | 'province' | 'income_bracket' | 'is_pwd'
   | 'is_solo_parent_dependent' | 'is_indigenous' | 'is_top_graduate';
@@ -102,111 +92,71 @@ type ProfileField = 'education_level' | 'year_level' | 'gwa' | 'course_field'
 type Operator = 'gte'|'lte'|'eq'|'neq'|'in'|'includes'|'is_true'|'is_false';
 
 interface Rule { field: ProfileField; operator: Operator; value: unknown; isMandatory: boolean; humanLabel: string; }
-interface Profile { /* the fields above, all optional */ }
-
-interface RuleResult { rule: Rule; passed: boolean; }
-interface MatchResult {
-  scholarshipId: string;
-  bucket: 'eligible' | 'near_miss' | 'not_eligible';
-  passedReasons: string[];   // humanLabel of passed mandatory rules
-  failedReasons: string[];   // humanLabel of failed mandatory rules
-}
+interface Profile { /* the fields above, all optional; Zod .strict() */ }
 ```
 
-**Rules of evaluation (pure function `evaluateScholarship(profile, rules): MatchResult`):**
+`ProfileField` is the single source of truth, shared by the matcher, the admin form, and mirrored by the DB's `eligibility_rules_field_check` CHECK constraint (`DATABASE.md` §3) — kept in sync manually until an admin UI generates the constraint.
 
-1. Evaluate every rule with `applyOperator(profileValue, operator, ruleValue)`.
-2. If a **mandatory** field is **missing** from the profile → treat that rule as **failed** (conservative: never claim eligible on unknown data).
-3. `eligible` = all mandatory rules pass. `near_miss` = exactly one mandatory rule fails. else `not_eligible`.
-4. Ranking of eligible results: by `closes_at` ascending (soonest deadline first), then `coverage_type` (full > partial > allowance).
-5. **Never** infer or soften: no fuzzy matching, no LLM. A missing rule field is a data bug to fix in the admin tool, surfaced by tests.
+**Modules:**
 
-`applyOperator` truth table is the primary unit-test target (see §5).
+- `apply-operator.ts` — `applyOperator(profileValue, operator, ruleValue)`: pure switch over all 8 operators, fails closed on type mismatch (never throws), exhaustive `never` check on the operator union.
+- `evaluate-scholarship.ts` — `evaluateScholarship(profile, rules, scholarshipId)`: a missing mandatory profile field is **always treated as failed** (never inferred). `eligible` = 0 mandatory fails, `near_miss` = exactly 1, else `not_eligible`.
+- `rank.ts` — `rank(items)`: sorts by `closesAt` ascending, then coverage type (`full` > `partial` > `allowance` > `other`).
+- `build-scholarship-matches.ts` — `buildScholarshipMatches(rows, profile)`: pure row→bucket transform; picks the soonest deadline cycle per scholarship, builds `whyChips`/`gapExplainer`, calls `rank` per bucket. This is the pure/impure boundary: the DB read lives only in `lib/actions/match-profile.ts`.
 
-**Why pure functions:** zero I/O means the whole matcher is testable without a database, runs in <1ms per scholarship, and its correctness is provable by enumerating operator/value cases. The server action only does I/O (load rules) and delegates the decision to the pure core.
+Fully unit-tested: `apply-operator.test.ts`, `evaluate-scholarship.test.ts`, `rank.test.ts`, `build-scholarship-matches.test.ts`.
 
-## 4.6 Deadline Status Job (daily)
+## 6. Deadline Status & Reminders (daily)
 
 ```
 For each deadline_cycle:
-  today := current date (Asia/Manila)
+  today := getManilaTodayIso()   -- lib/deadline/manila-date.ts, pinned to Asia/Manila
   if today < opens_at             → 'upcoming'
   elif today > closes_at          → 'closed'
   elif closes_at - today <= 7     → 'closing_soon'
   else                            → 'open'
 Then: for reminders where remind_on <= today and sent_at is null
-      and the saved scholarship's cycle is not 'closed':
-        send email via Resend; set sent_at.
+      and the scholarship's cycle is not 'closed':
+        send via Resend (lib/email/send-reminder-email.ts); set sent_at.
 ```
 
-Idempotent (safe to re-run). Timezone pinned to **Asia/Manila** to avoid off-by-one on deadlines — a real correctness trap; test the date boundaries explicitly.
+Implemented as **two Next.js Route Handlers**, not a Supabase Edge Function or `pg_cron` job — `app/api/cron/refresh-deadlines/route.ts` and `app/api/cron/send-reminders/route.ts`, invoked by **Vercel Cron** (`vercel.json`: `0 16 * * *` and `15 16 * * *` UTC, i.e. ~00:00/00:15 Manila). Idempotent (safe to re-run); pure status computation lives in `lib/deadline/compute-status.ts` (unit-tested in `compute-status.test.ts`).
 
-## 4.7 API / Interface Surface
+## 7. Admin Tool
 
-| Interface                              | Type                       | Purpose                                                                                           |
-| --------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------- |
-| `matchProfile(profile)`                | Server Action              | Validate (Zod) → load published scholarships + rules → run matcher → return buckets. No writes.   |
-| `getScholarship(slug)`                 | Server (data)              | Detail page data (SSR + metadata for SEO).                                                        |
-| `saveScholarship(scholarshipId)`       | Server Action (auth)       | Insert into `saved_scholarships` (RLS enforces owner).                                            |
-| `setReminder(scholarshipId, leadDays)` | Server Action (auth)       | Compute `remind_on`, upsert reminder.                                                             |
-| `admin.upsertScholarship(payload)`     | Server Action (admin role) | CRUD; validates every rule.field ∈ ProfileField; blocks publish unless `official_url` + verified. |
-| `admin.markVerified(id)`               | Server Action (admin role) | Sets `last_verified_at = now()`, `verified_by = uid`.                                             |
-| cron: `refreshDeadlineStatus()`        | Edge Function              | §4.6 job.                                                                                          |
-| cron: `sendDueReminders()`             | Edge Function              | §4.6 reminders.                                                                                    |
-| **Phase 2** `watchSources()`           | Edge Function              | Fetch/diff/extract → insert `ingestion_suggestions(status='pending')`. Never publishes.           |
+Manages: **Scholarships** (create/edit/publish/mark-verified), **Providers** (name, type, website), and per-scholarship **eligibility rules**, **requirements**, and **deadline cycles** via nested panels on the edit page. Every mutation is audit-logged (`audit_log` table, `DATABASE.md` §2). Gating is `requireAdmin()` called individually per page/action (§3, §10) — membership in `admin_users` is granted only via a manual service-role DB operation; no self-service admin signup (intentional for a solo-curator MVP, per FR9).
 
-## 4.8 Security & Privacy Enforcement
+## 8. Security & Privacy Enforcement (summary)
 
-See `SECURITY.md` for the full threat model; this is the implementation-level summary.
+Full detail lives in `SECURITY.md`; the architecture-relevant summary:
 
-- **RLS ON** for `student_profiles`, `saved_scholarships`, `reminders`: policy `user_id = auth.uid()` for select/insert/update/delete.
-- Public tables (`scholarships`, `providers`, `eligibility_rules`, `requirements`, `deadline_cycles`): read-only anon policy `is_published = true`; writes only via admin role / service context.
-- Admin routes gated by a `role` claim; never trust client — check server-side in every admin action.
-- **Anonymous matching persists nothing.** The profile lives in the request/session only. Persisting a `student_profile` is an explicit, opt-in, authenticated action.
-- Zod validation on every server action input; reject unknown fields.
-- Service-role key used **only** in server context (Edge Functions / server actions), never shipped to the client.
+- RLS is the default-deny baseline for every table (`DATABASE.md` §5) — content tables have **no write policy at all**, so every mutation from the app goes through a service-role client in a server action, never a client-side Supabase call.
+- Anonymous matching persists nothing — there is no `student_profiles` table (deliberately deferred, see `DATABASE.md` §2).
+- Every server action input is validated with a Zod `.strict()` schema (`lib/types/`); unknown fields are rejected.
+- Service-role key is used only in server actions / route handlers, never in a client component or shipped bundle.
 
-## 4.9 Implementation Order (build sequence — dependencies noted)
+## 9. Testing
 
-1. **Schema + RLS + seed 3 scholarships** — everything depends on this. Add the `is_published`/`last_verified_at` CHECK constraint now.
-2. **Shared types + Zod schemas** (`ProfileField`, `Rule`, `Profile`) — single source of truth for app + admin.
-3. **Matching module** (`lib/matching/`) — pure functions + full unit tests. _Build and test before any UI._
-4. **Profile form + results page** — calls `matchProfile()`; render buckets + matched-reasons.
-5. **Scholarship detail page** (SSR, metadata) — requirements checklist, deadline, verified date, official link, disclaimer.
-6. **Auth (magic link) + save/saved list** — first RLS-protected feature.
-7. **Deadline status cron + reminder emails** — Edge Function + Resend; test date boundaries.
-8. **Admin tool** — CRUD + mark-verified; validate rule.field ∈ ProfileField; complete the 10–20 seed dataset.
-9. **QA pass** — test matrix §5, accessibility, mobile, deploy.
-10. **(Phase 2)** Source-watcher — isolated, suggestions only.
+- **Unit (Vitest, `lib/**/*.test.ts`, `tests/**/*.test.ts`, node env):** full matching-engine coverage, deadline status transitions, URL-allowlist logic, "last verified" staleness logic, Zod schema validation, and an opt-in RLS integration test (`tests/integration/rls.test.ts`, skipped unless `TEST_SUPABASE_URL`/`TEST_SUPABASE_ANON_KEY` are set — runs against a local Supabase stack).
+- **E2E (Playwright, `tests/e2e/`):** `smoke.spec.ts` is deliberately scoped to **DB-independent pages only** (landing, `/match` form rendering + client-side GWA validation, `/about`, `/privacy`, security headers) — DB-backed flows (`/s/[slug]`, `/saved`, `/admin`) are explicitly out of scope today since CI/dev doesn't reliably have a linked Supabase project.
+- **Not covered by any test:** the server actions themselves (only the pure functions they call are unit-tested), the two cron route handlers, admin CRUD flows end-to-end, and email sending.
 
-## 4.10 Risks & Mitigations (technical)
+## 10. Known Gaps / Divergence from the Original Plan
 
-| Risk                                            | Mitigation                                                                                                |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| Rule references a field the matcher can't read  | Zod-enforce `field ∈ ProfileField` in admin; unit test rejects unknown fields.                            |
-| Timezone off-by-one on deadlines                | Pin all date math to Asia/Manila; boundary tests at opens_at/closes_at ±1 day.                             |
-| "Eligible" shown on missing data                | Matcher treats missing mandatory field as failed; conservative by construction.                            |
-| Publishing an unverified record                 | DB CHECK constraint blocks publish without `official_url` + `last_verified_at`.                            |
-| Reminder double-send                            | `sent_at` guard; idempotent job.                                                                            |
-| RLS misconfig leaks profiles                    | Default-deny; explicit owner policies; test with two users.                                                |
-| Phase-2 LLM hallucination reaches users         | Suggestions land in `ingestion_suggestions(status='pending')`; only admin approval writes a live record.   |
+- **Deadline job runs on Vercel Cron + Route Handlers, not a Supabase Edge Function** — simpler to keep the whole app in one deployable, at the cost of coupling cron to Vercel specifically.
+- **Admin gating is per-page/per-action, not centralized.** Next.js 16 renamed `middleware.ts` to `proxy.ts`; the `proxy()` in this repo only refreshes the Supabase session cookie, it does not gate `/admin`. A missed `requireAdmin()` call on a new admin page/action would ship unprotected — worth a lint rule or a shared layout wrapper if the admin surface grows.
+- **FR10 (Phase 2 source-watcher) is not built** — no `source_watch`/`ingestion_suggestions` tables or Edge Function exist yet.
+- **No CI** — lint/typecheck/test/build are run manually pre-push per `docs/iskolar-version-control.md`; see `DEPLOYMENT.md` §6.
 
-## 4.11 Handoff to Programmer
+## 11. Build Sequence (for reference / future features)
 
-Build in the order in §4.9. Start with the **schema + RLS (step 1)** and the **pure matching module with its unit tests (step 3)** — the matcher must be green before any UI is wired. Conventions: TypeScript strict; all server-action inputs validated with Zod; `ProfileField` is the single source of truth shared by app, admin, and matcher; no LLM anywhere in the matching or publish path; every published scholarship must carry `official_url` + `last_verified_at` (enforced by DB CHECK). Pin all date logic to Asia/Manila. Ask for clarification only on: the exact seed scholarship list and their per-scholarship eligibility rules (these are data, and must be transcribed from official sources, not invented).
-
----
-
-# 5. Test Matrix (core)
-
-| Area                  | Cases                                                                                                                                                                       |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `applyOperator`       | For each operator (gte/lte/eq/neq/in/includes/is_true/is_false): pass case, fail case, boundary case (e.g. gwa exactly == threshold), wrong-type value, null profile value. |
-| `evaluateScholarship` | all-pass → eligible; exactly-one-fail → near_miss; two-fail → not_eligible; missing mandatory field → treated as fail; non-mandatory fail → still eligible.                 |
-| Ranking               | two eligible with different `closes_at` → sooner first; tie on date → full coverage before partial.                                                                         |
-| Deadline status       | today < opens_at → upcoming; today == closes_at → open/closing_soon (define inclusive); today == closes_at+1 → closed; TZ = Asia/Manila.                                    |
-| Reminders             | remind_on today & unsent & not closed → sends + sets sent_at; already sent → skip; scholarship closed → skip.                                                               |
-| RLS                   | user A cannot read/write user B's profile, saved, reminders.                                                                                                                |
-| Publish guard         | publishing without official_url or last_verified_at → rejected.                                                                                                             |
-| Admin rule validation | rule.field not in ProfileField → rejected.                                                                                                                                  |
-| E2E happy path        | landing → profile → results → detail → sign in → save → set reminder, under 3 min.                                                                                          |
+1. Schema + RLS (done, see `DATABASE.md`)
+2. Shared types + Zod schemas (done, `lib/types/`)
+3. Matching module + unit tests (done, §5)
+4. Profile form + results page (done, `/match`)
+5. Scholarship detail page (done, `/s/[slug]`)
+6. Auth + save/saved list (done, `/auth`, `/saved`)
+7. Deadline cron + reminder emails (done, §6)
+8. Admin tool (done, §7)
+9. QA pass — ongoing; e2e coverage still partial (§9)
+10. **(Phase 2)** Source-watcher — not started

@@ -65,7 +65,7 @@ The product's core asset is **verified, current scholarship data**, not the matc
 
 | ID   | Requirement                                                                                                                                                  |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| FR1  | Anonymous profile form capturing matching fields (see `DATABASE.md` §4.4).                                                                                   |
+| FR1  | Anonymous profile form capturing matching fields (see `DATABASE.md` §2).                                                                                     |
 | FR2  | Deterministic matching engine returning **Eligible**, **Near-miss (fails 1 rule)**, and **Not eligible** buckets.                                            |
 | FR3  | Result cards show: title, provider, coverage, deadline (with days-left), matched-reasons, requirement count, official link, `last verified` date.            |
 | FR4  | Scholarship detail page: full description, benefits, full eligibility list, requirement checklist, deadline cycle, official + application links, disclaimer. |
