@@ -221,6 +221,10 @@ create policy "admin read audit_log" on audit_log for select to authenticated us
 
 `requireAdmin()` (`lib/auth/require-admin.ts`) is a **UX gate**, not the security boundary — the real boundary is RLS plus the fact that all admin mutations use the service-role client. Even if an admin page's `requireAdmin()` check were accidentally skipped, an `authenticated`-role client still could not write to `scholarships`/`providers`/etc., because no RLS policy permits it.
 
+### A policy is not a grant
+
+`create policy ... to <role>` only gates access a role already has via `GRANT` — it doesn't confer the underlying `SELECT`/`INSERT`/`UPDATE`/`DELETE` privilege on the table. Without the matching `GRANT`, every query from that role fails `permission denied for table X` regardless of what the policy allows, and neither `npm run build` nor the unit suite will catch it (mocked, no real DB). `20260101000006_grant_table_privileges.sql` is where these live for every table above; **any new RLS-policy'd table needs a matching `GRANT` added there (or a new migration) in the same change**, not as an afterthought. `tests/integration/rls.test.ts` against a local stack (`SECURITY.md` §5 checklist) is the only thing that actually exercises this — run it after touching either file.
+
 ## 6. Functions & Triggers
 
 ```sql

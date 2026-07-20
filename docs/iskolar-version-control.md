@@ -96,7 +96,7 @@ supabase/.temp/
 **Prevention:**
 
 - Before every commit that touches config, ask: _does this file contain a real key, token, or credential?_ Grep for `SUPABASE_SERVICE_ROLE`, `RESEND_API_KEY`, `CRON_SECRET`, or any `sk_`/`re_`-style token pattern before staging.
-- Add a lightweight secret scan (e.g., `gitleaks` as a pre-commit hook or CI step) rather than relying on memory alone — this is currently a manual gap since no CI exists yet (`SECURITY.md` §4, `DEPLOYMENT.md` §6).
+- Add a lightweight secret scan (e.g., `gitleaks` as a pre-commit hook or CI step) rather than relying on memory alone — this is currently a manual gap since no CI exists yet (`SECURITY.md` §4, `DEPLOYMENT.md` §7).
 - Never paste real keys into commit messages, PR descriptions, or comments "temporarily."
 
 **If a secret is committed anyway:**

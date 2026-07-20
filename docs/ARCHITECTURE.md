@@ -146,7 +146,7 @@ Full detail lives in `SECURITY.md`; the architecture-relevant summary:
 - **Deadline job runs on Vercel Cron + Route Handlers, not a Supabase Edge Function** — simpler to keep the whole app in one deployable, at the cost of coupling cron to Vercel specifically.
 - **Admin gating is per-page/per-action, not centralized.** Next.js 16 renamed `middleware.ts` to `proxy.ts`; the `proxy()` in this repo only refreshes the Supabase session cookie, it does not gate `/admin`. A missed `requireAdmin()` call on a new admin page/action would ship unprotected — worth a lint rule or a shared layout wrapper if the admin surface grows.
 - **FR10 (Phase 2 source-watcher) is not built** — no `source_watch`/`ingestion_suggestions` tables or Edge Function exist yet.
-- **No CI** — lint/typecheck/test/build are run manually pre-push per `docs/iskolar-version-control.md`; see `DEPLOYMENT.md` §6.
+- **No CI** — lint/typecheck/test/build are run manually pre-push per `docs/iskolar-version-control.md`; see `DEPLOYMENT.md` §7.
 
 ## 11. Build Sequence (for reference / future features)
 
