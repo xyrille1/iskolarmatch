@@ -1,5 +1,5 @@
 -- P5: admin role table + append-only audit log for privileged writes.
--- Per Context/iskolar-security.md SR-A5/SR-A6 (admin authz via a trusted
+-- Per docs/SECURITY.md SR-A5/SR-A6 (admin authz via a trusted
 -- server-side source, never a client claim) and SR-D3 (audit log).
 
 create table admin_users (

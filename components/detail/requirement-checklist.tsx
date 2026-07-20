@@ -9,7 +9,7 @@ export interface RequirementItem {
 }
 
 // Ephemeral for anonymous visitors (resets on reload) -- persisted per-user
-// once signed in is a P3 concern, per Context/iskolar-ux-design.md §4.4 (DECIDE 4d).
+// once signed in is a P3 concern, per docs/iskolar-ux-design.md §4.4 (DECIDE 4d).
 export function RequirementChecklist({ requirements }: { requirements: RequirementItem[] }) {
   const [checked, setChecked] = useState<Set<string>>(new Set());
 

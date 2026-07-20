@@ -155,7 +155,7 @@ export async function upsertProvider(payload: unknown): Promise<{ id: string }> 
 }
 
 // --- FormData-facing wrappers for plain <form action={...}> submissions ---
-// The admin tool is deliberately utilitarian (Context/iskolar-ux-design.md
+// The admin tool is deliberately utilitarian (docs/iskolar-ux-design.md
 // §2: "NOT editorial-skinned"), so these skip client-side state management
 // in favor of direct Server Action form bindings.
 

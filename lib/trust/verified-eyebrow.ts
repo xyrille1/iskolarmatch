@@ -1,5 +1,5 @@
 // Beyond the staleness threshold, the trust stamp flips from "VERIFIED <date>"
-// to "CONFIRM ON OFFICIAL SITE" -- per Context/iskolar-ux-design.md §5 (DECIDE 5a).
+// to "CONFIRM ON OFFICIAL SITE" -- per docs/iskolar-ux-design.md §5 (DECIDE 5a).
 export const VERIFIED_STALENESS_DAYS = 60;
 
 export function verifiedEyebrowLabel(lastVerifiedAt: string | null): string {

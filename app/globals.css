@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Monochrome editorial palette + functional status colors.
-   Per Context/iskolar-ux-design.md §1.2. Status is always dot + word,
+   Per docs/iskolar-ux-design.md §1.2. Status is always dot + word,
    never color alone (accessibility + the doc's own adaptation note). */
 :root {
   --paper: #ffffff;

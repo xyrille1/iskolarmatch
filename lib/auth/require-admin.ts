@@ -7,7 +7,7 @@ export interface AdminContext {
 }
 
 // Role check happens server-side against a trusted source (admin_users),
-// never a client-supplied claim (Context/iskolar-security.md SR-A5/SR-A6).
+// never a client-supplied claim (docs/SECURITY.md SR-A5/SR-A6).
 // Granting admin access is a manual, service-role-only operation (no
 // self-service signup path) -- intentional for a solo-curator MVP.
 export async function requireAdmin(): Promise<AdminContext> {

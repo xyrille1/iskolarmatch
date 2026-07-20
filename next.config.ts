@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
-// Security headers per Context/iskolar-security.md SR-R2. A nonce-based
+// Security headers per docs/SECURITY.md SR-R2. A nonce-based
 // script-src was tried first (see git history) but reverted: several routes
 // here (/, /match, /about, /privacy) are deliberately statically prerendered
 // for speed/SEO (a P1 decision), and a per-request nonce can never be

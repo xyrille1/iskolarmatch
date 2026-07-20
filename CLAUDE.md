@@ -1,15 +1,18 @@
 # IskolarMatch — Working Notes for Claude
 
-Portfolio-grade scholarship-finder app for Filipino students. Full product/technical/security/UX specs live in `Context/` — read them before proposing architecture or feature changes:
+Portfolio-grade scholarship-finder app for Filipino students. Full product/technical/security/UX specs live in `docs/` — read them before proposing architecture or feature changes:
 
-- `Context/scholarship-finder-spec.md` — PRD, MVP plan, technical design (Next.js + Supabase + Tailwind)
-- `Context/iskolar-security.md` — security & privacy requirements (RA 10173, RLS, secrets, link-integrity)
-- `Context/iskolar-ux-design.md` — UI/UX design system
-- `Context/iskolar-version-control.md` — git workflow, commit hygiene, and QA gates (see below)
+- `docs/PRD.md` — PRD & MVP plan
+- `docs/ARCHITECTURE.md` — technical design (Next.js + Supabase + Tailwind)
+- `docs/DATABASE.md` — data models / schema
+- `docs/DEPLOYMENT.md` — hosting & deployment
+- `docs/SECURITY.md` — security & privacy requirements (RA 10173, RLS, secrets, link-integrity)
+- `docs/iskolar-ux-design.md` — UI/UX design system
+- `docs/iskolar-version-control.md` — git workflow, commit hygiene, and QA gates (see below)
 
 ## Version control & QA — standing instructions
 
-Follow `Context/iskolar-version-control.md` for every git operation in this repo, not just when asked. In particular:
+Follow `docs/iskolar-version-control.md` for every git operation in this repo, not just when asked. In particular:
 
 - Run the pre-commit checklist (§7 of that doc) before every commit: `git status` review of what's actually staged, scan for secrets/debug code, no `.env`/credential files, message explains *why*.
 - Run the pre-push checklist before every push: clean commit sequence, correct branch/remote target, migrations reviewed as a diff if any are involved.

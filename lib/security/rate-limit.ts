@@ -1,6 +1,6 @@
 import "server-only";
 
-// Lightweight in-memory token-bucket rate limiter, per Context/iskolar-security.md
+// Lightweight in-memory token-bucket rate limiter, per docs/SECURITY.md
 // SR-R2 ("in-memory or Upstash free, keyed by IP"). Deliberately simple for MVP:
 // resets on cold start / per-instance in a serverless deployment, which is an
 // acceptable gap at this scale -- documented, not silently assumed away.

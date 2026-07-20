@@ -2,7 +2,7 @@
 
 _A dedicated security and data-protection specification for IskolarMatch, the Philippine scholarship discovery and matching tool. Covers threat model, data classification, security requirements, an MVP-realistic hardening scope, a security test checklist, and incident response._
 
-**Companion to:** `scholarship-finder-spec.md` (PRD → MVP → TDD)
+**Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `iskolar-ux-design.md`
 **Owner:** Xyrille · **Stack:** Next.js + TypeScript + Supabase (Postgres) + Tailwind · **Hosting:** Vercel + Supabase + Resend
 **Status:** Draft v1 for build
 

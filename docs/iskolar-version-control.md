@@ -2,7 +2,7 @@
 
 _A practical, error-avoidant git workflow for a solo-dev, portfolio-grade repository. Covers branching, commit hygiene, secrets safety, destructive-command discipline, pre-commit/pre-push QA gates, and recovery procedures._
 
-**Companion to:** `scholarship-finder-spec.md`, `iskolar-security.md`, `iskolar-ux-design.md`
+**Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`, `iskolar-ux-design.md`
 **Owner:** Xyrille · **Repo:** github.com/xyrille1/iskolarmatch
 **Status:** Draft v1 for build
 
@@ -21,7 +21,7 @@ _A practical, error-avoidant git workflow for a solo-dev, portfolio-grade reposi
 
 Two things make version-control discipline higher-stakes than usual for this project, even though it's "just a portfolio app":
 
-1. **Security doc alignment.** `iskolar-security.md` (SR-S3, SR-S4, SR-B1–B3) already commits to secrets never entering the repo and migrations being forward-only and reviewed. Git hygiene is how those requirements actually get enforced day to day — a security spec is only as good as the git habits behind it.
+1. **Security doc alignment.** `SECURITY.md` (SR-S3, SR-S4, SR-B1–B3) already commits to secrets never entering the repo and migrations being forward-only and reviewed. Git hygiene is how those requirements actually get enforced day to day — a security spec is only as good as the git habits behind it.
 2. **The dataset is the product.** Per the security doc's SEC-G5, the curated scholarship dataset must be fully reproducible from git. That only holds if commits are clean, migrations aren't rewritten after the fact, and nothing destructive happens to history without a documented reason.
 
 ---

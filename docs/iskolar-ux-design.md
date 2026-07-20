@@ -2,7 +2,7 @@
 
 _Rewritten to follow the exact typographic pairing and layout system of the supplied reference (letsplayfight.com — desktop + mobile). The product substance (flows, trust patterns, accessibility, security-driven UI) is unchanged from the prior spec; the **visual language, typography, layout, and imagery are re-skinned** to the reference and its content re-mapped to IskolarMatch._
 
-**Companion to:** `scholarship-finder-spec.md`, `iskolar-security.md`
+**Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`
 **Owner:** Xyrille · **Stack:** Next.js (App Router, Server Components) + TypeScript + Tailwind · **Target:** mobile-first, WCAG AA
 **Reference:** Playfight studio site (editorial serif display + neutral sans, monochrome, asymmetric gallery, heavy whitespace, pill buttons)
 **Status:** Draft v2 — reference-matched
