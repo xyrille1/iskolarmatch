@@ -2,8 +2,7 @@ import "server-only";
 import { timingSafeEqual } from "node:crypto";
 
 // Bearer-token check for cron/Route Handler endpoints (docs/SECURITY.md
-// SR-S: "CRON_SECRET -- bearer token authenticating cron/Edge Function HTTP
-// endpoints"). Constant-time comparison to avoid a timing side-channel.
+// §3.5). Constant-time comparison to avoid a timing side-channel.
 export function verifyCronSecret(request: Request): boolean {
   const expected = process.env.CRON_SECRET;
   if (!expected) return false;

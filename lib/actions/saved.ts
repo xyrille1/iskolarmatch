@@ -17,7 +17,7 @@ async function requireUserId(): Promise<{ supabase: Awaited<ReturnType<typeof cr
 }
 
 // FR7: save scholarship. user_id always comes from the session, never a
-// request param (SR-A6) -- RLS also enforces this independently.
+// request param (docs/SECURITY.md §3.4) -- RLS also enforces this independently.
 export async function saveScholarship(scholarshipId: string): Promise<void> {
   const { supabase, userId } = await requireUserId();
 

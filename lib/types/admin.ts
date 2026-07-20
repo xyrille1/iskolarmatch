@@ -5,7 +5,7 @@ import { isAllowlistedUrl } from "@/lib/security/url-allowlist";
 const urlAllowlistRefinement = (val: string | undefined | null) => !val || isAllowlistedUrl(val);
 
 // Mirrors the DB publish guard + URL allowlist trigger (defense-in-depth,
-// SR-I5): the admin form rejects the same things the DB would, so the
+// docs/SECURITY.md §3.2): the admin form rejects the same things the DB would, so the
 // curator gets a clear error instead of a raw constraint-violation message.
 export const scholarshipUpsertSchema = z
   .object({
