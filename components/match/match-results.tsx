@@ -72,7 +72,7 @@ export function MatchResults({
         ‹ Start over
       </button>
 
-      <p className="sticky top-0 z-10 mt-6 bg-paper py-3 text-sm">
+      <p className="sticky top-16 z-10 mt-6 border-b border-line bg-paper py-3 text-sm">
         {results.eligible.length} eligible · {results.nearMiss.length} near · {results.notEligible.length} not
         eligible
       </p>

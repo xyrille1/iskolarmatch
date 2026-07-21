@@ -2,7 +2,7 @@
 
 _Rewritten to follow the exact typographic pairing and layout system of the supplied reference (letsplayfight.com — desktop + mobile). The product substance (flows, trust patterns, accessibility, security-driven UI) is unchanged from the prior spec; the **visual language, typography, layout, and imagery are re-skinned** to the reference and its content re-mapped to IskolarMatch._
 
-**Companion to:** `scholarship-finder-spec.md`, `iskolar-security.md`
+**Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`
 **Owner:** Xyrille · **Stack:** Next.js (App Router, Server Components) + TypeScript + Tailwind · **Target:** mobile-first, WCAG AA
 **Reference:** Playfight studio site (editorial serif display + neutral sans, monochrome, asymmetric gallery, heavy whitespace, pill buttons)
 **Status:** Draft v2 — reference-matched
@@ -376,14 +376,14 @@ Reminder editor: lead-days (default 7) → `remind_on = closes_at − lead_days`
 
 ### 4.7 Admin (internal — deliberately NOT editorial)
 
-> **⟡ ADAPTATION 3 — admin stays utilitarian.** The editorial serif/whitespace system is for the public product; the curator tool prioritizes density and speed. Plain shadcn/ui defaults: record table with **publish state + verified-age** (stale flagged), scholarship editor with **eligibility-rule builder** (`field ∈ ProfileField` enforced), **Mark verified**, and (Phase 2) **suggestions diff review**. The **URL allowlist** (security doc SR-I5/D2) surfaces as a form error here.
+> **⟡ ADAPTATION 3 — admin stays utilitarian.** The editorial serif/whitespace system is for the public product; the curator tool prioritizes density and speed. Plain shadcn/ui defaults: record table with **publish state + verified-age** (stale flagged), scholarship editor with **eligibility-rule builder** (`field ∈ ProfileField` enforced), **Mark verified**, and (Phase 2) **suggestions diff review**. The **URL allowlist** (`SECURITY.md` §3.2) surfaces as a form error here.
 
 ---
 
 ## 5. Trust & Safety UI Patterns (restyled to the editorial system)
 
 - **`VerifiedEyebrow`** — "VERIFIED AUG 12, 2026" as a small uppercase eyebrow. Beyond a staleness threshold (**▸ DECIDE 5a: 60 days**) it reads "CONFIRM ON OFFICIAL SITE."
-- **`OfficialLinkPill`** — the outbound "Apply" pill always prints its **destination domain** beneath (e.g. `ched.gov.ph`), `rel="noopener noreferrer"`, allowlisted domains only (security doc SR-I5). Anti-phishing, made visible.
+- **`OfficialLinkPill`** — the outbound "Apply" pill always prints its **destination domain** beneath (e.g. `ched.gov.ph`), `rel="noopener noreferrer"`, allowlisted domains only (`SECURITY.md` §3.2). Anti-phishing, made visible.
 - **`Disclaimer`** — one consistent sentence, same placement on every detail page.
 - **`GapExplainer`** (near-miss) — states the single unmet rule in plain terms, framed as a next step.
 - **Privacy microcopy** — profile form + auth screen each carry a one-line plain-language note (security doc PR2/PR3); full notice at `/privacy`.
@@ -418,7 +418,7 @@ Reminder editor: lead-days (default 7) → `remind_on = closes_at − lead_days`
 - **Rendering split:** Landing, `/match` results, `/s/[slug]` = **Server Components** (fast paint, SEO, no-JS reading). Client Components only for: form live-validation, save/reminder actions, checklist toggles.
 - **Font loading (critical for the editorial look on 3G/4G):** self-host and **subset** the serif to display glyphs only; `font-display: swap`; **preload** the one serif weight used above the fold; body sans = Inter subset or system stack. This delivers the reference aesthetic without a bandwidth penalty on the target devices.
 - **Imagery:** typographic/provider tiles are HTML/CSS (near-zero bytes); any optional photo is lazy-loaded, width-capped, AVIF/WebP.
-- **State:** no global store; server state via Server Actions (`matchProfile`, `saveScholarship`, `setReminder`); local UI via `useState`. Anonymous profile never persisted (security doc PR1).
+- **State:** no global store; server state via Server Actions (`matchProfile`, `saveScholarship`, `setReminder`); local UI via `useState`. Anonymous profile never persisted (`SECURITY.md` §1, SEC-G1).
 - **Components:** shadcn/ui + Tailwind, **restyled to the tokens in §1** (don't ship default shadcn look). Design tokens as CSS variables = single source of truth for app + admin.
 - **Performance budget:** < 2s to results on 4G — near-zero JS on results, reserve status/verified rows to avoid layout shift, subset fonts.
 - **v0.dev handoff:** §1 tokens + §4 wireframes + §5 patterns are the raw material for the Stage-6 v0 prompt (generatable next).

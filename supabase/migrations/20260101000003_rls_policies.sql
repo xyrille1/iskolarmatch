@@ -1,6 +1,6 @@
 -- Row Level Security: default-deny baseline. Public tables are anon-readable
 -- only where is_published = true; no write policies exist anywhere, so all
--- writes require the service-role key. See Context/iskolar-security.md SR-A3/SR-A4.
+-- writes require the service-role key. See docs/DATABASE.md §5.
 
 alter table providers enable row level security;
 alter table scholarships enable row level security;

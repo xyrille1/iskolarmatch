@@ -36,8 +36,8 @@ export type Operator = (typeof OPERATORS)[number];
 
 export const operatorSchema = z.enum(OPERATORS);
 
-// Profile data is session-only and never persisted (Context/iskolar-security.md
-// PR1) -- there is no student_profiles table. All fields are optional: a
+// Profile data is session-only and never persisted (docs/SECURITY.md
+// §1, SEC-G1) -- there is no student_profiles table. All fields are optional: a
 // missing field is treated as a failed mandatory rule by the matching engine,
 // never inferred.
 export const profileSchema = z

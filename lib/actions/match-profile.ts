@@ -48,7 +48,7 @@ function coerceProfileField(value: FormDataEntryValue | null): string | undefine
 
 // Form-facing wrapper: parses FormData, validates, rate-limits, then calls
 // matchProfile(). Profile data never touches the URL or gets persisted --
-// session-only per Context/iskolar-security.md PR1.
+// session-only per docs/SECURITY.md §1 (SEC-G1).
 export async function submitProfileForm(
   _prevState: MatchFormState,
   formData: FormData

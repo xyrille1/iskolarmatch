@@ -2,7 +2,7 @@
 
 _A practical, error-avoidant git workflow for a solo-dev, portfolio-grade repository. Covers branching, commit hygiene, secrets safety, destructive-command discipline, pre-commit/pre-push QA gates, and recovery procedures._
 
-**Companion to:** `scholarship-finder-spec.md`, `iskolar-security.md`, `iskolar-ux-design.md`
+**Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`, `iskolar-ux-design.md`
 **Owner:** Xyrille · **Repo:** github.com/xyrille1/iskolarmatch
 **Status:** Draft v1 for build
 
@@ -21,7 +21,7 @@ _A practical, error-avoidant git workflow for a solo-dev, portfolio-grade reposi
 
 Two things make version-control discipline higher-stakes than usual for this project, even though it's "just a portfolio app":
 
-1. **Security doc alignment.** `iskolar-security.md` (SR-S3, SR-S4, SR-B1–B3) already commits to secrets never entering the repo and migrations being forward-only and reviewed. Git hygiene is how those requirements actually get enforced day to day — a security spec is only as good as the git habits behind it.
+1. **Security doc alignment.** `SECURITY.md` §1 (SEC-G4 secret safety, SEC-G5 recoverability) already commits to secrets never entering the repo and migrations being forward-only and reviewed. Git hygiene is how those requirements actually get enforced day to day — a security spec is only as good as the git habits behind it.
 2. **The dataset is the product.** Per the security doc's SEC-G5, the curated scholarship dataset must be fully reproducible from git. That only holds if commits are clean, migrations aren't rewritten after the fact, and nothing destructive happens to history without a documented reason.
 
 ---
@@ -32,7 +32,7 @@ Two things make version-control discipline higher-stakes than usual for this pro
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Solo, low-risk change (docs, config, small fix)              | Commit directly to `main`. No ceremony needed at this repo size.                                                                                                  |
 | Solo, multi-step feature (e.g., matching engine, admin CRUD) | Short-lived feature branch (`feat/matching-engine`, `fix/deadline-status-tz`), merged to `main` when working end-to-end. Keeps `main` always in a demoable state. |
-| Anything touching schema/migrations                          | Always a branch, even solo — makes the diff reviewable before it hits a real database (SR-B3).                                                                    |
+| Anything touching schema/migrations                          | Always a branch, even solo — makes the diff reviewable before it hits a real database (see `DEPLOYMENT.md` §5).                                                    |
 | Once a second contributor joins                              | All work goes through branches + PRs (§10); direct pushes to `main` stop.                                                                                         |
 
 **Naming convention:** `type/short-description` — `feat/`, `fix/`, `chore/`, `docs/`, `refactor/`. Matches the commit-type vocabulary in §3.
@@ -55,7 +55,7 @@ Two things make version-control discipline higher-stakes than usual for this pro
   Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `security`.
 
 - **Write the "why," not the "what."** Code and diffs show what changed; the message should carry the reasoning a diff can't (e.g., "fix: pin deadline recompute to Asia/Manila — UTC was flipping status a day early").
-- **Never commit half-finished, broken states to `main`.** A feature branch can have messy WIP commits; squash or clean up before merging so `main`'s history stays legible (SR-B3's spirit: reviewable, revertible history).
+- **Never commit half-finished, broken states to `main`.** A feature branch can have messy WIP commits; squash or clean up before merging so `main`'s history stays legible (reviewable, revertible history — see `DEPLOYMENT.md` §5 on forward-only migrations).
 - **No `--amend` on anything already pushed**, unless explicitly agreed — amending shared history rewrites commit hashes and breaks anyone else's checkout.
 
 ---
@@ -66,7 +66,7 @@ Enforced by `.gitignore` **and** the pre-commit check in §7 — belt and suspen
 
 | Category                | Examples                                                                    | Where it lives instead                                                     |
 | ----------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Secrets / credentials   | `.env`, `.env.local`, service-role key, Resend API key, `CRON_SECRET`       | Vercel/Supabase environment variables (SR-S3)                              |
+| Secrets / credentials   | `.env`, `.env.local`, service-role key, Resend API key, `CRON_SECRET`       | Vercel/Supabase environment variables (`SECURITY.md` §3.8)                 |
 | Dependency artifacts    | `node_modules/`, `.next/`, `dist/`, `build/`                                | Reinstalled/rebuilt from `package.json` + lockfile                         |
 | Local tooling state     | `.vscode/` (unless team-shared settings), `*.log`, `.DS_Store`, `Thumbs.db` | Local machine only                                                         |
 | Generated/derived files | Supabase generated types (if regenerated by a script), coverage reports     | Regenerated on demand, or explicitly decided to commit if genuinely useful |
@@ -87,7 +87,7 @@ Thumbs.db
 supabase/.temp/
 ```
 
-**`.env.example`** is the one env-shaped file that _should_ be committed — names only, no values (already required by SR-S3).
+**`.env.example`** is the one env-shaped file that _should_ be committed — names only, no values (already required by `SECURITY.md` §3.8).
 
 ---
 
@@ -96,7 +96,7 @@ supabase/.temp/
 **Prevention:**
 
 - Before every commit that touches config, ask: _does this file contain a real key, token, or credential?_ Grep for `SUPABASE_SERVICE_ROLE`, `RESEND_API_KEY`, `CRON_SECRET`, or any `sk_`/`re_`-style token pattern before staging.
-- Once the project has a `package.json`, add a lightweight secret scan (e.g., `gitleaks` as a pre-commit hook or CI step, per SR-S4) rather than relying on memory alone.
+- Add a lightweight secret scan (e.g., `gitleaks` as a pre-commit hook or CI step) rather than relying on memory alone — this is currently a manual gap since no CI exists yet (`SECURITY.md` §4, `DEPLOYMENT.md` §7).
 - Never paste real keys into commit messages, PR descriptions, or comments "temporarily."
 
 **If a secret is committed anyway:**
@@ -139,7 +139,7 @@ Run this before **every** commit and again before every push — not just at mil
 
 **Before commit:** 4. Stage specific files by name — avoid `git add -A`/`git add .` on anything touching config or env-shaped files; it's how secrets sneak in. 5. Commit message follows §3's format and explains _why_.
 
-**Before push:** 6. `git log` — does the commit sequence about to be pushed read cleanly? No "wip," "fix typo," "actually fix" chains that should've been squashed on a feature branch. 7. Run `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` locally — all must pass. Don't push red. If the change touches Supabase migrations, also run `npx supabase db reset` against a local stack (requires Docker Desktop) and confirm it applies with zero errors before pushing. 8. Confirm target branch and remote (`git branch -vv`, `git remote -v`) — especially important once feature branches exist, to avoid pushing a feature branch's work directly onto `main`. 9. For anything schema/migration-related: has it been reviewed as a diff (SR-B3), not run ad hoc against a live database?
+**Before push:** 6. `git log` — does the commit sequence about to be pushed read cleanly? No "wip," "fix typo," "actually fix" chains that should've been squashed on a feature branch. 7. Run `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` locally — all must pass. Don't push red. If the change touches Supabase migrations, also run `npx supabase db reset` against a local stack (requires Docker Desktop) and confirm it applies with zero errors before pushing. 8. Confirm target branch and remote (`git branch -vv`, `git remote -v`) — especially important once feature branches exist, to avoid pushing a feature branch's work directly onto `main`. 9. For anything schema/migration-related: has it been reviewed as a diff (`DEPLOYMENT.md` §5), not run ad hoc against a live database?
 
 **After push:** 10. `git status` clean, `git log` matches what you expect on the remote (spot-check with `git log origin/main` if anything felt uncertain).
 
@@ -170,7 +170,7 @@ Not active today (solo dev, direct-to-`main`), but decided in advance so the tra
 - All changes land via PR, reviewed before merge — no direct pushes to `main`.
 - `main` is protected: require passing checks (once CI exists) before merge.
 - **Squash-merge** feature branches into `main` by default — keeps `main`'s history one-commit-per-feature and legible; the messy in-progress commits stay on the (deleted) feature branch.
-- Migrations and admin/security-relevant changes get an explicit second look, even on a small team — matches the "reviewed before running against the live DB" requirement in SR-B3.
+- Migrations and admin/security-relevant changes get an explicit second look, even on a small team — matches the "reviewed before running against the live DB" principle in `DEPLOYMENT.md` §5.
 
 ---
 
