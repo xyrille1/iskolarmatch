@@ -10,7 +10,10 @@ export function SiteHeader() {
         <span aria-hidden className="h-2 w-2 rounded-full bg-ink" />
         IskolarMatch
       </Link>
-      <nav aria-label="Primary" className="text-sm">
+      <nav aria-label="Primary" className="flex items-center gap-6 text-sm">
+        <Link href="/scholarships" className="link-trace">
+          Browse all
+        </Link>
         <Link href="/match" className="link-trace">
           Find scholarships
         </Link>
