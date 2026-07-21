@@ -13,6 +13,10 @@ export interface MatchFormState {
   formError?: string;
   fieldErrors?: Record<string, string>;
   results?: MatchProfileResult;
+  // FR20 (docs/PRD.md §4.3): the parsed profile, echoed back on success so a
+  // signed-in user can optionally save it for the opt-in digest. Never
+  // persisted here -- this is just handed back to client state.
+  profile?: Profile;
 }
 
 // The DB-reading entry point deferred out of P0 (see lib/matching/index.ts).
@@ -28,7 +32,7 @@ export async function matchProfile(profile: Profile): Promise<MatchProfileResult
       `id, slug, title, coverage_type, last_verified_at,
        providers ( name ),
        deadline_cycles ( closes_at, opens_at, status ),
-       eligibility_rules ( id, field, operator, value, is_mandatory, human_label ),
+       eligibility_rules ( id, field, operator, value, is_mandatory, human_label, guidance_text ),
        requirements ( id )`
     )
     .eq("is_published", true);
@@ -89,5 +93,5 @@ export async function submitProfileForm(
   }
 
   const results = await matchProfile(parsed.data);
-  return { status: "success", results };
+  return { status: "success", results, profile: parsed.data };
 }
