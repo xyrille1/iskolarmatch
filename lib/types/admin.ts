@@ -49,6 +49,8 @@ export const eligibilityRuleInputSchema = z
     value: z.unknown(),
     is_mandatory: z.boolean(),
     human_label: z.string().min(1),
+    // FR14 (docs/PRD.md §4.2): optional curator-authored near-miss guidance.
+    guidance_text: z.string().optional(),
   })
   .strict();
 

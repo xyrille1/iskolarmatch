@@ -34,11 +34,15 @@ insert into scholarships (
 insert into deadline_cycles (scholarship_id, academic_year, opens_at, closes_at, status) values
   ('00000000-0000-0000-0000-000000000101', '2026-2027', '2026-06-01', '2026-09-15', 'open');
 
-insert into eligibility_rules (scholarship_id, field, operator, value, is_mandatory, human_label) values
-  ('00000000-0000-0000-0000-000000000101', 'education_level', 'in', '["college"]', true, 'Must be enrolled in college'),
-  ('00000000-0000-0000-0000-000000000101', 'gwa', 'gte', '85', true, 'General weighted average of at least 85'),
-  ('00000000-0000-0000-0000-000000000101', 'income_bracket', 'in', '["low", "mid"]', true, 'Household income in the low or mid bracket'),
-  ('00000000-0000-0000-0000-000000000101', 'is_top_graduate', 'is_true', 'true', false, 'Bonus: top graduate of previous level');
+-- guidance_text (FR14, docs/PRD.md §4.2) is curator-authored, informational
+-- copy shown only on a FAILED MANDATORY rule in near-miss results -- never a
+-- guaranteed-future-eligible claim. Left null on the non-mandatory "bonus"
+-- rule since non-mandatory rules never appear in near-miss/failed reasons.
+insert into eligibility_rules (scholarship_id, field, operator, value, is_mandatory, human_label, guidance_text) values
+  ('00000000-0000-0000-0000-000000000101', 'education_level', 'in', '["college"]', true, 'Must be enrolled in college', 'This program is for enrolled college students. If you are still in senior high, check back once you have enrolled, or look at senior-high-track scholarships in the meantime.'),
+  ('00000000-0000-0000-0000-000000000101', 'gwa', 'gte', '85', true, 'General weighted average of at least 85', 'Focus on raising your GWA above 85 this term -- improving your weakest subjects usually moves the average more than an already-strong one.'),
+  ('00000000-0000-0000-0000-000000000101', 'income_bracket', 'in', '["low", "mid"]', true, 'Household income in the low or mid bracket', 'This program prioritizes low- and mid-income households. A barangay certificate of indigency can help confirm your bracket if it is borderline.'),
+  ('00000000-0000-0000-0000-000000000101', 'is_top_graduate', 'is_true', 'true', false, 'Bonus: top graduate of previous level', null);
 
 insert into requirements (scholarship_id, label, is_mandatory, sort_order) values
   ('00000000-0000-0000-0000-000000000101', 'Certified true copy of grades', true, 1),
@@ -67,11 +71,11 @@ insert into scholarships (
 insert into deadline_cycles (scholarship_id, academic_year, opens_at, closes_at, status) values
   ('00000000-0000-0000-0000-000000000102', '2026-2027', '2026-05-01', '2026-08-01', 'open');
 
-insert into eligibility_rules (scholarship_id, field, operator, value, is_mandatory, human_label) values
-  ('00000000-0000-0000-0000-000000000102', 'education_level', 'in', '["college"]', true, 'Must be enrolled in college'),
-  ('00000000-0000-0000-0000-000000000102', 'course_field', 'in', '["stem"]', true, 'Must be enrolled in a STEM course'),
-  ('00000000-0000-0000-0000-000000000102', 'gwa', 'gte', '88', true, 'General weighted average of at least 88'),
-  ('00000000-0000-0000-0000-000000000102', 'is_top_graduate', 'is_true', 'true', false, 'Bonus: top graduate of previous level');
+insert into eligibility_rules (scholarship_id, field, operator, value, is_mandatory, human_label, guidance_text) values
+  ('00000000-0000-0000-0000-000000000102', 'education_level', 'in', '["college"]', true, 'Must be enrolled in college', 'This scholarship is for enrolled college students. Check back once you have enrolled in a participating university.'),
+  ('00000000-0000-0000-0000-000000000102', 'course_field', 'in', '["stem"]', true, 'Must be enrolled in a STEM course', 'This scholarship is limited to STEM courses. If you are weighing a course shift, a STEM program opens up more DOST-SEI options.'),
+  ('00000000-0000-0000-0000-000000000102', 'gwa', 'gte', '88', true, 'General weighted average of at least 88', 'This is one of the higher GWA thresholds in our dataset -- steady improvement across a full term matters more here than a single subject.'),
+  ('00000000-0000-0000-0000-000000000102', 'is_top_graduate', 'is_true', 'true', false, 'Bonus: top graduate of previous level', null);
 
 insert into requirements (scholarship_id, label, is_mandatory, sort_order) values
   ('00000000-0000-0000-0000-000000000102', 'Certified true copy of grades', true, 1),
@@ -102,10 +106,10 @@ insert into scholarships (
 insert into deadline_cycles (scholarship_id, academic_year, opens_at, closes_at, status) values
   ('00000000-0000-0000-0000-000000000103', '2026-2027', '2026-06-15', '2026-10-31', 'open');
 
-insert into eligibility_rules (scholarship_id, field, operator, value, is_mandatory, human_label) values
-  ('00000000-0000-0000-0000-000000000103', 'education_level', 'in', '["college"]', true, 'Must be enrolled in college'),
-  ('00000000-0000-0000-0000-000000000103', 'income_bracket', 'in', '["low"]', true, 'Household income in the low bracket'),
-  ('00000000-0000-0000-0000-000000000103', 'is_top_graduate', 'is_true', 'true', false, 'Bonus: top graduate of previous level');
+insert into eligibility_rules (scholarship_id, field, operator, value, is_mandatory, human_label, guidance_text) values
+  ('00000000-0000-0000-0000-000000000103', 'education_level', 'in', '["college"]', true, 'Must be enrolled in college', 'This subsidy is for enrolled college students. Check back once you have enrolled.'),
+  ('00000000-0000-0000-0000-000000000103', 'income_bracket', 'in', '["low"]', true, 'Household income in the low bracket', 'TES prioritizes the low-income bracket specifically. A barangay certificate of indigency can help confirm this if your household''s income is borderline.'),
+  ('00000000-0000-0000-0000-000000000103', 'is_top_graduate', 'is_true', 'true', false, 'Bonus: top graduate of previous level', null);
 
 insert into requirements (scholarship_id, label, is_mandatory, sort_order) values
   ('00000000-0000-0000-0000-000000000103', 'Certificate of indigency or income', true, 1),
