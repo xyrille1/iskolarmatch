@@ -17,6 +17,9 @@ export function SiteFooter() {
         <Link href="/about" className="w-fit transition-opacity hover:opacity-70">
           How it works
         </Link>
+        <Link href="/trust" className="w-fit transition-opacity hover:opacity-70">
+          Data freshness
+        </Link>
       </nav>
 
       <div className="mt-16 flex flex-wrap items-end justify-between gap-6 border-t border-paper-ink/15 pt-8">
