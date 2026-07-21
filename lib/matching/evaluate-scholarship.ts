@@ -22,6 +22,7 @@ export function evaluateScholarship(profile: Profile, rules: Rule[], scholarship
     const ruleResult: RuleResult = {
       ruleId: rule.id,
       humanLabel: rule.human_label ?? null,
+      guidanceText: rule.guidance_text ?? null,
       passed,
     };
 
