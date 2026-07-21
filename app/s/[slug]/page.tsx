@@ -7,6 +7,7 @@ import { OfficialLinkPill } from "@/components/detail/official-link-pill";
 import { Disclaimer } from "@/components/detail/disclaimer";
 import { RequirementChecklist } from "@/components/detail/requirement-checklist";
 import { SaveReminderControls } from "@/components/detail/save-reminder-controls";
+import { ReportIssueForm } from "@/components/detail/report-issue-form";
 import { PillLink } from "@/components/ui/pill";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -160,6 +161,10 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
               url={scholarship.applicationUrl ?? scholarship.officialUrl}
               label="Apply on official site"
             />
+          </div>
+
+          <div className="mt-8">
+            <ReportIssueForm scholarshipId={scholarship.id} />
           </div>
         </div>
       </main>
