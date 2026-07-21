@@ -76,6 +76,8 @@ The product's core asset is **verified, current scholarship data**, not the matc
 | FR9  | Admin CRUD for providers, scholarships, eligibility rules, requirements, deadline cycles; "mark verified" action stamps `last_verified_at` + curator id.     |
 | FR10 | **(Phase 2)** Source-watcher agent detects changes on official pages and files structured **suggestions** for admin review. Never publishes automatically.   |
 
+See §4 for the v2 feature backlog (FR11–FR20), scoped separately from the shipped MVP requirements above.
+
 ## 1.7 Non-Functional Requirements
 
 - **Accuracy/Trust:** Every public scholarship record MUST have `official_url` and `last_verified_at`. Enforced at the DB and UI layer.
@@ -95,9 +97,9 @@ The product's core asset is **verified, current scholarship data**, not the matc
 
 ## 1.9 Open Questions / Future
 
-- Should near-miss suggestions include "how to qualify next cycle" guidance?
-- LGU/barangay scholarships: how deep to go by region for MVP?
-- Notifications beyond email (SMS is expensive in PH; push needs PWA)?
+- Should near-miss suggestions include "how to qualify next cycle" guidance? **Resolved: yes, see §4.2 FR14.**
+- LGU/barangay scholarships: how deep to go by region for MVP? **Still open/deferred** — out of scope for the v2 backlog in §4 (a "Reach & Inclusion" direction was considered and deliberately not prioritized this round).
+- Notifications beyond email (SMS is expensive in PH; push needs PWA)? **Resolved: yes, PWA push, see §4.3 FR18. SMS remains explicitly out of scope on cost grounds.**
 
 ---
 
@@ -190,6 +192,55 @@ A pilot cohort (even 20–30 real students) completes profile → saves ≥1 rel
 - If pilot users match and save relevant scholarships and value the reminders → build Phase 2 ingestion to scale data.
 - If matching relevance < 90% → fix rules/data before scaling.
 - If nobody returns → the value was in the data freshness; revisit curation cadence, not features.
+
+---
+
+# 4. V2 Feature Backlog (Post-MVP) — Status: Built
+
+The MVP (FR1–FR9) proved the core loop works: verified matching + deadline tracking beats a spreadsheet. This backlog is not a random feature wishlist — every item is chosen to deepen the product's actual differentiator (**verified, current data** — see the Appendix rationale below) or to add real matching depth and return-visit value, without violating the non-goals in §1.3 or the data-minimization posture in `SECURITY.md` (SEC-G1). Three directions were prioritized for this round: **trust & data-freshness**, **matching depth & UX**, and **engagement & retention**. A fourth direction — reach & inclusion (i18n/Tagalog UI, deeper LGU/barangay coverage, admin bulk-import) — was considered and deliberately deferred; see §1.9.
+
+**FR11–FR20 are all built** — see `ARCHITECTURE.md` §3–4 for the routes/actions, `DATABASE.md` §2 for the schema (migrations `20260101000007`–`20260101000011`), and `SECURITY.md` §3.9 for the new anon-write (FR13) and SEC-G1-exception (FR20) controls. The suggested phasing in §4.4 was followed in build order; every "must," "never," and security note below was honored as written, not loosened during implementation.
+
+## 4.1 Trust & Data Freshness
+
+| ID   | Requirement |
+| ---- | ----------- |
+| FR11 | Public trust/data-freshness dashboard — aggregate, read-only stats (% of published records verified within the last 60 days, total published count, oldest verification age), directly surfacing PRD goal G2 as a visible product feature rather than a hidden metric. |
+| FR12 | Curator staleness worklist (admin-only) — a query-only admin view listing published scholarships nearing/past the 60-day verified-staleness threshold, sorted by urgency. No new table required; a near-free companion to FR11 that reuses existing `scholarships.last_verified_at`. |
+| FR13 | "Report an issue" flag on scholarship detail pages — a form (reason enum + optional email) filing into a curator moderation queue. **Not public UGC/reviews** — a moderated trust signal only. This is the app's **first anon-write endpoint** and must be treated as new attack surface, not bundled as low-risk: implement as a rate-limited Server Action using the service-role client (same shape as `submitProfileForm`/`requestMagicLink`), **never** a new `anon` RLS `insert` policy — that would break the documented invariant that no write policy exists for `anon` on any table (`DATABASE.md` §1, §5). Suggested future schema (not built in this pass): `scholarship_reports`, mirroring existing conventions — `reason` as a DB `CHECK`-constrained enum (matching the `coverage_type`/`operator` pattern, not free text), `resolved_by`/`resolved_at` mirroring `verified_by`/`last_verified_at`, and a partial index `where resolved = false` (mirrors `reminders_due_idx`). |
+
+## 4.2 Matching Depth & UX
+
+| ID   | Requirement |
+| ---- | ----------- |
+| FR14 | Near-miss "path to qualify" guidance — curator-authored (**not** AI-generated) plain-language guidance text per eligibility rule, shown for the single unmet rule in near-miss results. Resolves the §1.9 open question on near-miss guidance. Copy must read as informational ("what to work on"), never as a guaranteed-future-eligible claim — otherwise it functionally becomes a disguised AI-style eligibility decision, which §1.3 explicitly forbids. |
+| FR15 | Not-eligible explainability — extend the existing `whyChips`/`gapExplainer` output (`lib/matching/build-scholarship-matches.ts`) to the not-eligible bucket: show which specific rules failed, not just near-miss's single gap. A pure UI/data-shape extension of the existing deterministic matcher output; no change to matching semantics. |
+| FR16 | Scholarship comparison view — select 2–3 results from any bucket and view a side-by-side table (coverage, deadline, requirement count, mandatory rules). Purely client-side, derived from already-fetched match results; no new DB reads. |
+| FR17 | Browse & filter mode independent of the profile form — a new route listing all published scholarships with filters (coverage type, provider type, region, deadline status) and keyword search, for students who want to explore before/without submitting a profile. Complements FR1/FR2 rather than replacing them. Flagged as the **heaviest single item** in this backlog (new pagination/facet/search infrastructure) — don't treat as equal-weight to FR14–FR16 when scheduling. |
+
+## 4.3 Engagement & Retention
+
+| ID   | Requirement |
+| ---- | ----------- |
+| FR18 | PWA + Web Push reminders as an alternative/addition to email — free Web Push API + VAPID keys, no per-message cost (unlike SMS). Resolves the §1.9 open question on notifications beyond email; SMS remains explicitly out of scope on cost grounds. |
+| FR19 | Shareable/exportable saved list — a signed-in user generates a read-only share link (random unguessable slug, not tied to their email) or a print/PDF-friendly view of their saved shortlist, e.g. to send to a parent or guidance counselor. Must be served via a `SECURITY DEFINER` RPC or service-role-backed path returning only scholarship fields — **never** a client-facing query that could expose `user_id`/email through a future join change, mirroring the existing `is_admin()` pattern. |
+| FR20 | **(SEC-G1 exception — flagged, not default)** Opt-in weekly "new matches for you" digest email. Requires persisting a signed-in user's profile answers, **only for users who explicitly opt in** — the one item in this backlog that changes the current zero-persisted-profile posture (`SECURITY.md` SEC-G1). Must ship last, with its own explicit sign-off, gated on a prior `SECURITY.md`/`DATABASE.md` amendment: a new opt-in `saved_profiles` table (RLS mirroring `reminders`' owner-CRUD via `auth.uid()`; stores the whole `Profile` as `jsonb` rather than duplicated columns; remember the `GRANT` migration `DATABASE.md` §5 warns is easy to miss). Named `saved_profiles`, deliberately **not** `student_profiles`, so `DATABASE.md`'s "Deferred / not implemented" list continues to read accurately once this ships. |
+
+## 4.4 Suggested Phasing
+
+Mirrors the §3.1 phase-table style; risk-ordered rather than theme-ordered, since some engagement items carry lower risk than some trust items.
+
+| Phase | Items | Why this grouping |
+| ----- | ----- | ------------------ |
+| P7 | FR11, FR14, FR12, FR15 | Near-zero risk: pure read queries or data-shape extensions of already-deterministic output. No new write surface, no new privacy surface. |
+| P8 | FR13 alone | First anon-write endpoint in the app — new attack surface, deserves its own rate-limiting/moderation-queue build, not bundled with "low risk" items. |
+| P9 | FR17, then FR16 | Heavier discovery infra first; the comparison view is lighter client-side work that can build on it. |
+| P10 | FR18, FR19 | Low-privacy-risk engagement. FR19's share link must use the SECURITY DEFINER/service-role pattern above, not a client-facing RLS policy. |
+| P11 | FR20 alone | Gated on its own security review and doc amendment before build — never bundled automatically with the rest. |
+
+## 4.5 Reaffirmed Non-Goals
+
+Nothing in this backlog introduces application/document submission, payments, or AI-generated eligibility decisions — FR14's guidance text is curator-authored, not model-generated. No feature defaults anonymous users into a persisted profile: FR20 is opt-in, signed-in-only, and the sole exception to the zero-persisted-profile posture, called out as such rather than slipped in silently.
 
 ---
 
