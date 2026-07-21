@@ -16,7 +16,14 @@ export interface ScholarshipMatch {
   lastVerifiedAt: string | null;
   requirementCount: number;
   whyChips: string[];
+  // FR15 (docs/PRD.md §4.2): labels of every failed mandatory rule -- one
+  // entry for near-miss (mirrors gapExplainer), several for not-eligible.
+  // Always empty for eligible results (0 mandatory fails by definition).
+  failedChips: string[];
   gapExplainer: string | null;
+  // FR14: curator-authored guidance for the single near-miss gap. Only ever
+  // set alongside gapExplainer (near-miss); null for every other bucket.
+  guidance: string | null;
 }
 
 export interface MatchProfileResult {
@@ -40,6 +47,7 @@ export interface ScholarshipRow {
     value: unknown;
     is_mandatory: boolean;
     human_label: string | null;
+    guidance_text?: string | null;
   }[];
   requirements: { id: string }[];
 }
@@ -67,6 +75,7 @@ export function buildScholarshipMatches(rows: ScholarshipRow[], profile: Profile
       value: r.value,
       is_mandatory: r.is_mandatory,
       human_label: r.human_label,
+      guidance_text: r.guidance_text ?? null,
     }));
 
     const result = evaluateScholarship(profile, rules, row.id);
@@ -84,7 +93,9 @@ export function buildScholarshipMatches(rows: ScholarshipRow[], profile: Profile
       lastVerifiedAt: row.last_verified_at,
       requirementCount: row.requirements.length,
       whyChips: result.passedReasons.map((r) => r.humanLabel).filter((l): l is string => Boolean(l)),
+      failedChips: result.failedReasons.map((r) => r.humanLabel).filter((l): l is string => Boolean(l)),
       gapExplainer: result.bucket === "near_miss" ? (result.failedReasons[0]?.humanLabel ?? null) : null,
+      guidance: result.bucket === "near_miss" ? (result.failedReasons[0]?.guidanceText ?? null) : null,
     };
 
     const rankable: RankableResult = { result, closesAt: cycle.closes_at, coverageType };

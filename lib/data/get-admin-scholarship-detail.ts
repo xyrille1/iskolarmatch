@@ -23,6 +23,7 @@ export interface AdminScholarshipDetail {
     value: unknown;
     is_mandatory: boolean;
     human_label: string | null;
+    guidance_text: string | null;
   }[];
   requirements: { id: string; label: string; is_mandatory: boolean; sort_order: number }[];
   deadlineCycles: { id: string; academic_year: string | null; opens_at: string | null; closes_at: string; status: string }[];
@@ -36,7 +37,7 @@ export async function getAdminScholarshipDetail(id: string): Promise<AdminSchola
     .select(
       `id, provider_id, title, slug, summary, description, coverage_type, benefit_summary,
        official_url, application_url, is_published, last_verified_at,
-       eligibility_rules ( id, field, operator, value, is_mandatory, human_label ),
+       eligibility_rules ( id, field, operator, value, is_mandatory, human_label, guidance_text ),
        requirements ( id, label, is_mandatory, sort_order ),
        deadline_cycles ( id, academic_year, opens_at, closes_at, status )`
     )

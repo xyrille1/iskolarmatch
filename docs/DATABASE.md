@@ -4,7 +4,7 @@ _Authoritative schema reference, generated from the actual migrations in `supaba
 
 **Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DEPLOYMENT.md`, `SECURITY.md`
 **Owner:** Xyrille · **Stack:** PostgreSQL via Supabase
-**Status:** Reflects migrations `20260101000001`–`20260101000005` — update this doc in the same PR as any new migration
+**Status:** Reflects migrations `20260101000001`–`20260101000011` (through the v2 feature backlog, `PRD.md` §4) — update this doc in the same PR as any new migration
 
 ---
 
@@ -67,6 +67,9 @@ eligibility_rules                             -- data-driven; new scholarships n
   value          jsonb                        -- number | string | string[] | boolean
   is_mandatory   boolean not null default true
   human_label    text                         -- e.g. "GWA of 90 or higher"
+  guidance_text  text                         -- FR14 (PRD.md §4.2): curator-authored "how to qualify
+                                               -- next cycle" copy, shown on a failed mandatory rule.
+                                               -- Nullable; never AI-generated. Added 20260101000007.
   constraint eligibility_rules_field_check check (field in (
     'education_level','year_level','gwa','course_field','region','province',
     'income_bracket','is_pwd','is_solo_parent_dependent','is_indigenous','is_top_graduate'
@@ -89,6 +92,23 @@ allowlisted_domains                           -- curated foundation domains beyo
   added_at   timestamptz not null default now()
   -- currently empty; the app-side CURATED_FOUNDATION_DOMAINS list (lib/security/url-allowlist.ts)
   -- is likewise empty today — only gov.ph/edu.ph suffixes are enforced in practice.
+
+scholarship_reports                           -- FR13 (PRD.md §4.1): curator moderation queue for
+                                               -- student-submitted "report an issue" flags. NOT public
+                                               -- UGC/reviews. Added 20260101000008.
+  id             uuid pk default gen_random_uuid()
+  scholarship_id uuid not null references scholarships(id) on delete cascade
+  reason         text not null check (reason in ('stale_info','broken_link','wrong_deadline','other'))
+  detail         text
+  reporter_email text                         -- optional, not required to submit
+  resolved       boolean not null default false
+  resolved_by    uuid references auth.users(id)
+  resolved_at    timestamptz
+  created_at     timestamptz not null default now()
+  -- Zero RLS policies, same as allowlisted_domains: this is the app's first
+  -- anon-facing write, and it deliberately gets NO anon insert policy.
+  -- Submission goes through a rate-limited Server Action using the
+  -- service-role client instead (lib/actions/reports.ts) — see §5.
 ```
 
 ### User-owned (RLS: owner-only via `auth.uid()`)
@@ -109,6 +129,41 @@ reminders
   lead_days      int not null default 7
   sent_at        timestamptz
   unique(user_id, scholarship_id)               -- one active reminder per (user, scholarship); makes setReminder() idempotent
+
+push_subscriptions                             -- FR18 (PRD.md §4.3): Web Push, alternative/addition to
+                                                -- email reminders. Added 20260101000009.
+  id         uuid pk default gen_random_uuid()
+  user_id    uuid not null references auth.users(id) on delete cascade
+  endpoint   text not null unique
+  p256dh     text not null
+  auth       text not null
+  created_at timestamptz not null default now()
+  -- No update policy -- a subscription is created or removed, never edited.
+
+saved_list_shares                              -- FR19 (PRD.md §4.3): one active read-only share link
+                                                -- per user. Added 20260101000010.
+  id         uuid pk default gen_random_uuid()
+  user_id    uuid not null unique references auth.users(id) on delete cascade
+  slug       text not null unique              -- app-generated (crypto.randomBytes, base64url), unguessable
+  created_at timestamptz not null default now()
+  -- Regenerating replaces the row (upsert on user_id), invalidating the
+  -- previous slug. The table itself has NO anon-facing read policy -- a
+  -- share's contents are only ever readable through get_shared_saved_list()
+  -- (§6), never a direct SELECT against this table or saved_scholarships.
+
+saved_profiles                                 -- FR20 (PRD.md §4.3): opt-in weekly digest. Added
+                                                -- 20260101000011. THE scoped exception to the
+                                                -- zero-persisted-profile posture (SECURITY.md §1,
+                                                -- SEC-G1) -- signed-in AND explicitly opted-in only.
+                                                -- Do not confuse with student_profiles below.
+  id                       uuid pk default gen_random_uuid()
+  user_id                  uuid not null unique references auth.users(id) on delete cascade
+  profile                  jsonb not null       -- whole Profile object, not duplicated columns
+  digest_opt_in            boolean not null default true
+  notified_scholarship_ids jsonb not null default '[]'::jsonb  -- dedupe so the digest only reports NEW matches
+  last_digest_sent_at      timestamptz
+  created_at               timestamptz not null default now()
+  updated_at               timestamptz not null default now()
 ```
 
 ### Admin (service-role only, `authenticated` gets read-only self-checks)
@@ -130,7 +185,7 @@ audit_log                                      -- append-only; nothing auto-popu
 
 ### Deferred / not implemented — do not assume these exist
 
-- **`student_profiles`** — intentionally **not created**. Matching runs on an in-session profile only; nothing about a student is persisted unless they sign in to save/remind. This is a deliberate RA 10173 data-minimization choice for a mostly-minor audience (`SECURITY.md` §1, SEC-G1), not an oversight.
+- **`student_profiles`** — intentionally **not created**. Anonymous matching still runs on an in-session profile only; nothing about a student is persisted for the default, no-account flow. This is a deliberate RA 10173 data-minimization choice for a mostly-minor audience (`SECURITY.md` §1, SEC-G1), not an oversight. **`saved_profiles` (above) is a separate, narrower concept** — a signed-in user's profile, persisted only when they explicitly opt into the FR20 digest — and does not reopen this decision for anonymous browsing/matching, which remains exactly as before.
 - **`source_watch`**, **`ingestion_suggestions`** — Phase 2 (FR10, agentic source-watcher) tables; no migration exists yet. Do not reference them as current state.
 
 **ProfileField enum (single source of truth):** `education_level | year_level | gwa | course_field | region | province | income_bracket | is_pwd | is_solo_parent_dependent | is_indigenous | is_top_graduate`. Enforced in three independent places today — the TS type (`lib/types/profile.ts`), the Zod schema, and `eligibility_rules_field_check` above — kept in sync manually.
@@ -157,13 +212,18 @@ deadline_cycles_scholarship_id_idx    on deadline_cycles(scholarship_id)
 saved_scholarships_user_id_idx        on saved_scholarships(user_id)
 reminders_user_id_idx                 on reminders(user_id)
 reminders_due_idx                     on reminders(remind_on) where sent_at is null              -- partial
+scholarship_reports_scholarship_id_idx on scholarship_reports(scholarship_id)
+scholarship_reports_unresolved_idx    on scholarship_reports(created_at) where resolved = false  -- partial
+push_subscriptions_user_id_idx        on push_subscriptions(user_id)
+saved_list_shares_slug_idx            on saved_list_shares(slug)
+saved_profiles_digest_opt_in_idx      on saved_profiles(user_id) where digest_opt_in = true       -- partial
 ```
 
 The two partial indexes exist specifically to match the exact query shapes RLS policies and the reminder cron use — not general-purpose.
 
 ## 5. Row-Level Security — the primary access control
 
-**Every table has RLS enabled.** There is no write policy anywhere for `providers`, `scholarships`, `eligibility_rules`, `requirements`, `deadline_cycles`, or `allowlisted_domains` — **all writes to those tables require the service-role key**, which only server actions and cron handlers hold. This is the "default-deny baseline": if a policy doesn't explicitly allow it, it's denied.
+**Every table has RLS enabled.** There is no write policy anywhere for `providers`, `scholarships`, `eligibility_rules`, `requirements`, `deadline_cycles`, `allowlisted_domains`, or `scholarship_reports` — **all writes to those tables require the service-role key**, which only server actions and cron handlers hold. This is the "default-deny baseline": if a policy doesn't explicitly allow it, it's denied.
 
 ### Public content — anon + authenticated may `select` published rows only
 
@@ -182,9 +242,9 @@ create policy "anon read providers of published scholarships"
 
 An unpublished scholarship (and everything under it — its rules, requirements, cycles) is invisible to `anon`/`authenticated`, full stop.
 
-### `allowlisted_domains` — zero policies, intentionally
+### `allowlisted_domains` and `scholarship_reports` — zero policies, intentionally
 
-RLS is enabled with **no policies at all**, meaning default-deny for every role except `service_role`. Nobody outside a server action can read or write the curated domain list.
+RLS is enabled with **no policies at all** on both, meaning default-deny for every role except `service_role`. Nobody outside a server action can read or write the curated domain list. `scholarship_reports` (FR13) follows the same shape deliberately: it is the app's first anon-facing write, and per `PRD.md` §4.1 it must NOT get its own anon RLS insert policy — the public "report an issue" form (`lib/actions/reports.ts`) goes through a rate-limited Server Action using the service-role client instead, exactly like `submitProfileForm`/`requestMagicLink`, so "no write policy exists for `anon` on any table" stays literally true.
 
 ### User-owned tables — `auth.uid()` ownership, no exceptions
 
@@ -200,9 +260,17 @@ create policy "owner select reminders" on reminders for select to authenticated 
 create policy "owner insert reminders" on reminders for insert to authenticated with check (user_id = auth.uid());
 create policy "owner update reminders" on reminders for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "owner delete reminders" on reminders for delete to authenticated using (user_id = auth.uid());
+
+-- push_subscriptions (FR18): select/insert/delete for the owner, no update
+-- policy -- a subscription is created or removed, never edited. Same shape
+-- as saved_scholarships.
+-- saved_list_shares (FR19) and saved_profiles (FR20): full owner CRUD,
+-- same shape as reminders. saved_list_shares' contents are additionally
+-- readable by anon/authenticated ONLY via get_shared_saved_list() (§6) --
+-- never a direct policy on this table or saved_scholarships.
 ```
 
-There is no path — client-side or otherwise — for user A to read or write user B's saved list or reminders. This is the concrete enforcement of `PRD.md` NFR "Security" and `SECURITY.md` SEC-G2.
+There is no path — client-side or otherwise — for user A to read or write user B's saved list, reminders, push subscriptions, share link, or saved profile. This is the concrete enforcement of `PRD.md` NFR "Security" and `SECURITY.md` SEC-G2.
 
 ### Admin tables
 
@@ -248,6 +316,19 @@ create trigger scholarships_url_allowlist
 -- table's policy.
 create function is_admin() returns boolean language sql stable security definer
   set search_path = public as $$ select exists (select 1 from admin_users where user_id = auth.uid()) $$;
+
+-- FR19 (PRD.md §4.3): the ONLY path a saved-list share link's contents are
+-- ever read through. SECURITY DEFINER, search_path pinned, mirroring
+-- is_admin() above -- lets an anonymous visitor holding just the slug
+-- resolve a shared list WITHOUT a client-facing RLS policy on
+-- saved_list_shares or saved_scholarships that could someday leak
+-- user_id/email through a future join change. The RETURNS TABLE is a
+-- narrow, explicit allowlist of scholarship-facing columns only; is_published
+-- = true is re-checked here as defense-in-depth. Added 20260101000010;
+-- granted EXECUTE to anon, authenticated.
+create function get_shared_saved_list(share_slug text)
+returns table (scholarship_slug text, title text, provider_name text, closes_at date, opens_at date, status text)
+language sql stable security definer set search_path = public as $$ ... $$;
 ```
 
 ## 7. Known Gaps
@@ -256,3 +337,5 @@ create function is_admin() returns boolean language sql stable security definer
 - **`deadline_cycles.status`** has no CHECK constraint restricting it to the four known values.
 - **`scholarships.updated_at`** is not auto-refreshed by a trigger.
 - **`CURATED_FOUNDATION_DOMAINS`** (and its DB counterpart `allowlisted_domains`) is empty today — only `*.gov.ph`/`*.edu.ph` are allowlisted in practice; foundation-domain curation is a planned P5 feature, not yet built.
+- **`scholarship_reports.reason`** is a fixed 4-value CHECK enum (`stale_info`/`broken_link`/`wrong_deadline`/`other`) with no admin UI to add new reasons — adding one requires a migration, matching the `coverage_type`/`operator` convention elsewhere in this schema.
+- **`saved_profiles.notified_scholarship_ids`** is an unbounded jsonb array — fine at this MVP's 10-20 scholarship scale, would need a real join table if the catalog grows by orders of magnitude.

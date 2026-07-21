@@ -9,6 +9,9 @@ export const matchBucketSchema = z.enum(MATCH_BUCKETS);
 export interface RuleResult {
   ruleId: string;
   humanLabel: string | null;
+  // FR14 (docs/PRD.md §4.2): curator-authored guidance shown alongside a
+  // failed mandatory rule. Null unless the curator wrote one.
+  guidanceText: string | null;
   passed: boolean;
 }
 

@@ -3,6 +3,7 @@ import { verifyCronSecret } from "@/lib/security/verify-cron-secret";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getManilaTodayIso } from "@/lib/deadline/manila-date";
 import { sendReminderEmail } from "@/lib/email/send-reminder-email";
+import { sendPushNotification, PushSubscriptionExpiredError } from "@/lib/push/send-push-notification";
 
 interface DueReminderRow {
   id: string;
@@ -81,6 +82,30 @@ export async function GET(request: Request) {
     } catch {
       failed += 1;
       continue;
+    }
+
+    // FR18: best-effort push in addition to email -- email is the primary
+    // channel, so a push failure here never blocks marking the reminder sent.
+    const { data: subscriptions } = await supabase
+      .from("push_subscriptions")
+      .select("id, endpoint, p256dh, auth")
+      .eq("user_id", row.user_id);
+
+    for (const sub of subscriptions ?? []) {
+      try {
+        await sendPushNotification(
+          { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+          {
+            title: "Deadline coming up",
+            body: `${scholarship.title} closes ${cycle.closes_at}.`,
+            url: `/s/${scholarship.slug}`,
+          }
+        );
+      } catch (pushErr) {
+        if (pushErr instanceof PushSubscriptionExpiredError) {
+          await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+        }
+      }
     }
 
     const { error: markSentError } = await supabase

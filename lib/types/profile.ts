@@ -67,6 +67,9 @@ export const ruleSchema = z
     value: z.unknown(),
     is_mandatory: z.boolean(),
     human_label: z.string().nullable().optional(),
+    // FR14 (docs/PRD.md §4.2): curator-authored "how to qualify next cycle"
+    // guidance for a failed mandatory rule. Never AI-generated.
+    guidance_text: z.string().nullable().optional(),
   })
   .strict();
 

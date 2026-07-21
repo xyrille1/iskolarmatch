@@ -19,6 +19,9 @@ export function EligibilityRulesPanel({
             <span>
               {rule.field} {rule.operator} {JSON.stringify(rule.value)}
               {rule.is_mandatory ? "" : " (bonus)"} -- &quot;{rule.human_label}&quot;
+              {rule.guidance_text && (
+                <span className="block text-black/60">Guidance: {rule.guidance_text}</span>
+              )}
             </span>
             <form action={deleteEligibilityRule.bind(null, rule.id)}>
               <button type="submit" className="text-red-700 underline">
@@ -54,6 +57,12 @@ export function EligibilityRulesPanel({
           name="human_label"
           placeholder="Human label, e.g. GWA at least 85"
           required
+          className="col-span-2 rounded border border-black/20 px-2 py-1.5"
+        />
+        <textarea
+          name="guidance_text"
+          placeholder="Optional near-miss guidance, e.g. Retake units to raise your GWA above 85 before the next cycle opens."
+          rows={2}
           className="col-span-2 rounded border border-black/20 px-2 py-1.5"
         />
         <label className="col-span-2 flex items-center gap-2">

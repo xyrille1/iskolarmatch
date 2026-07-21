@@ -68,7 +68,11 @@ export async function addEligibilityRule(payload: unknown): Promise<void> {
   const parsed = eligibilityRuleInputSchema.parse(payload);
   const supabase = createSupabaseAdminClient();
 
-  const { data, error } = await supabase.from("eligibility_rules").insert(parsed).select("id").single();
+  const { data, error } = await supabase
+    .from("eligibility_rules")
+    .insert({ ...parsed, guidance_text: parsed.guidance_text || null })
+    .select("id")
+    .single();
   if (error) throw new Error(`Failed to add eligibility rule: ${error.message}`);
 
   await logAudit(userId, "create", "eligibility_rule", data.id, { scholarship_id: parsed.scholarship_id });
@@ -136,6 +140,25 @@ export async function deleteDeadlineCycle(cycleId: string): Promise<void> {
   revalidatePath("/admin");
 }
 
+// FR13 (docs/PRD.md §4.1): resolves a scholarship_reports row. Same shape as
+// every other admin write -- service-role client, requireAdmin() gate,
+// audit-logged. There is no client-facing RLS path to this table at all
+// (supabase/migrations/20260101000008_scholarship_reports.sql).
+export async function resolveScholarshipReport(reportId: string): Promise<void> {
+  const { userId } = await requireAdmin();
+  const supabase = createSupabaseAdminClient();
+
+  const { error } = await supabase
+    .from("scholarship_reports")
+    .update({ resolved: true, resolved_by: userId, resolved_at: new Date().toISOString() })
+    .eq("id", reportId);
+
+  if (error) throw new Error("Failed to resolve report.");
+
+  await logAudit(userId, "resolve", "scholarship_report", reportId);
+  revalidatePath("/admin/reports");
+}
+
 export async function upsertProvider(payload: unknown): Promise<{ id: string }> {
   const { userId } = await requireAdmin();
   const parsed = providerInputSchema.parse(payload);
@@ -198,6 +221,7 @@ export async function addEligibilityRuleFormAction(scholarshipId: string, formDa
     value,
     is_mandatory: formData.get("is_mandatory") === "on",
     human_label: formData.get("human_label")?.toString(),
+    guidance_text: formData.get("guidance_text")?.toString() || undefined,
   });
 }
 

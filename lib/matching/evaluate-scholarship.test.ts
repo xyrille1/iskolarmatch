@@ -81,6 +81,33 @@ describe('evaluateScholarship', () => {
     expect(result.failedReasons).toHaveLength(0);
   });
 
+  it('carries a failed rule\'s guidance_text through to guidanceText on the reason (FR14)', () => {
+    const profile: Profile = { gwa: 80 };
+    const rules: Rule[] = [
+      rule({
+        id: 'r1',
+        field: 'gwa',
+        operator: 'gte',
+        value: 85,
+        human_label: 'GWA 85+',
+        guidance_text: 'Retake units to raise your GWA before the next cycle.',
+      }),
+    ];
+
+    const result = evaluateScholarship(profile, rules, 'sch-1');
+
+    expect(result.failedReasons[0].guidanceText).toBe('Retake units to raise your GWA before the next cycle.');
+  });
+
+  it('defaults guidanceText to null when the rule has none', () => {
+    const profile: Profile = { gwa: 80 };
+    const rules: Rule[] = [rule({ id: 'r1', field: 'gwa', operator: 'gte', value: 85 })];
+
+    const result = evaluateScholarship(profile, rules, 'sch-1');
+
+    expect(result.failedReasons[0].guidanceText).toBeNull();
+  });
+
   it('is eligible when there are no rules at all (open to everyone)', () => {
     const result = evaluateScholarship({}, [], 'sch-1');
 
