@@ -28,20 +28,20 @@ export default async function ReportsPage() {
           Back to admin
         </Link>
       </div>
-      <p className="mt-2 text-sm text-black/60">Unresolved student reports, oldest first.</p>
+      <p className="mt-2 text-sm text-muted">Unresolved student reports, oldest first.</p>
 
       {reports.length === 0 ? (
-        <p className="mt-8 text-sm text-black/60">No open reports.</p>
+        <p className="mt-8 text-sm text-muted">No open reports.</p>
       ) : (
         <ul className="mt-8 flex flex-col gap-4 text-sm">
           {reports.map((report) => (
-            <li key={report.id} className="border-b border-black/10 pb-4">
+            <li key={report.id} className="border-b border-line pb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Link href={`/admin/scholarships/${report.scholarshipId}/edit`} className="font-medium underline">
                     {report.scholarshipTitle}
                   </Link>
-                  <span className="ml-2 text-black/60">{REASON_LABELS[report.reason] ?? report.reason}</span>
+                  <span className="ml-2 text-muted">{REASON_LABELS[report.reason] ?? report.reason}</span>
                 </div>
                 <form action={resolveScholarshipReport.bind(null, report.id)}>
                   <button type="submit" className="underline">
@@ -49,8 +49,8 @@ export default async function ReportsPage() {
                   </button>
                 </form>
               </div>
-              {report.detail && <p className="mt-1 text-black/70">{report.detail}</p>}
-              <p className="mt-1 text-xs text-black/50">
+              {report.detail && <p className="mt-1 text-ink/80">{report.detail}</p>}
+              <p className="mt-1 text-xs text-muted">
                 {new Date(report.createdAt).toLocaleString("en-PH")}
                 {report.reporterEmail && ` · ${report.reporterEmail}`}
               </p>

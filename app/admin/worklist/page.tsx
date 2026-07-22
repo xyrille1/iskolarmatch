@@ -20,16 +20,16 @@ export default async function StalenessWorklistPage() {
           Back to admin
         </Link>
       </div>
-      <p className="mt-2 text-sm text-black/60">
+      <p className="mt-2 text-sm text-muted">
         Published scholarships nearing or past the 60-day verified-staleness threshold, most urgent first.
       </p>
 
       {items.length === 0 ? (
-        <p className="mt-8 text-sm text-black/60">Nothing needs re-verification right now.</p>
+        <p className="mt-8 text-sm text-muted">Nothing needs re-verification right now.</p>
       ) : (
         <table className="mt-8 w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b border-black/20 text-left">
+            <tr className="border-b border-line text-left">
               <th className="py-2">Title</th>
               <th className="py-2">Provider</th>
               <th className="py-2">Last verified</th>
@@ -39,7 +39,7 @@ export default async function StalenessWorklistPage() {
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-black/10">
+              <tr key={item.id} className="border-b border-line">
                 <td className="py-2">{item.title}</td>
                 <td className="py-2">{item.providerName}</td>
                 <td className="py-2">

@@ -18,24 +18,24 @@ export default async function AdminProvidersPage() {
 
       <ul className="mt-6 flex flex-col gap-2 text-sm">
         {providers.map((p) => (
-          <li key={p.id} className="border-b border-black/10 py-2">
-            {p.name} <span className="text-black/50">({p.type})</span>
+          <li key={p.id} className="border-b border-line py-2">
+            {p.name} <span className="text-muted">({p.type})</span>
           </li>
         ))}
       </ul>
 
       <form action={upsertProviderFormAction} className="mt-8 flex flex-col gap-3 text-sm">
         <h2 className="text-lg font-semibold">Add provider</h2>
-        <input name="name" placeholder="Name" required className="rounded border border-black/20 px-2 py-1.5" />
-        <select name="type" required className="rounded border border-black/20 px-2 py-1.5">
+        <input name="name" placeholder="Name" required className="rounded border border-line px-2 py-1.5" />
+        <select name="type" required className="rounded border border-line px-2 py-1.5">
           {PROVIDER_TYPES.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
           ))}
         </select>
-        <input name="website" type="url" placeholder="https://..." className="rounded border border-black/20 px-2 py-1.5" />
-        <button type="submit" className="w-fit rounded border border-black px-3 py-1.5">
+        <input name="website" type="url" placeholder="https://..." className="rounded border border-line px-2 py-1.5" />
+        <button type="submit" className="w-fit rounded border border-ink px-3 py-1.5">
           Add provider
         </button>
       </form>

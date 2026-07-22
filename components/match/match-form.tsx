@@ -76,13 +76,14 @@ export function MatchForm({ onSuccess }: { onSuccess: (state: MatchFormState) =>
           step="0.01"
           inputMode="decimal"
           className="min-h-[44px] rounded-md border border-line px-4 py-2"
-          aria-describedby="gwa-help"
+          aria-invalid={state.status === "error" && Boolean(state.fieldErrors?.gwa)}
+          aria-describedby={state.status === "error" && state.fieldErrors?.gwa ? "gwa-help gwa-error" : "gwa-help"}
         />
         <p id="gwa-help" className="text-sm text-muted">
           Used only to check GWA-based requirements.
         </p>
         {state.status === "error" && state.fieldErrors?.gwa && (
-          <p role="alert" className="text-sm text-status-soon">
+          <p id="gwa-error" role="alert" className="text-sm text-status-soon">
             {state.fieldErrors.gwa}
           </p>
         )}

@@ -34,14 +34,14 @@ export default async function EditScholarshipPage({ params }: PageProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Edit: {scholarship.title}</h1>
         <form action={markVerified.bind(null, scholarship.id)}>
-          <button type="submit" className="rounded border border-black px-3 py-1.5 text-sm">
+          <button type="submit" className="rounded border border-ink px-3 py-1.5 text-sm">
             Mark verified now
           </button>
         </form>
       </div>
 
       {pendingSuggestions > 0 && (
-        <div className="mt-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="mt-4 rounded border border-status-soon/30 bg-status-soon/5 px-4 py-3 text-sm text-status-soon">
           The source-watcher found {pendingSuggestions} pending change
           {pendingSuggestions === 1 ? "" : "s"} for this scholarship.{" "}
           <Link href="/admin/suggestions" className="font-medium underline">

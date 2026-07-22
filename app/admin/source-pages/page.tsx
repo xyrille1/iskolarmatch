@@ -28,30 +28,30 @@ export default async function AdminSourcePagesPage() {
           Back to admin
         </Link>
       </div>
-      <p className="mt-2 text-sm text-black/60">
+      <p className="mt-2 text-sm text-muted">
         Official <strong>gov.ph / edu.ph</strong> index pages the discovery crawler reads each week to find new
         scholarships. Only these pages (and links found on them) are ever fetched. Off-allowlist sites can&apos;t be
         added.
       </p>
 
       {pages.length === 0 ? (
-        <p className="mt-8 text-sm text-black/60">No source pages registered yet.</p>
+        <p className="mt-8 text-sm text-muted">No source pages registered yet.</p>
       ) : (
         <ul className="mt-8 flex flex-col gap-3 text-sm">
           {pages.map((p) => (
-            <li key={p.id} className="border-b border-black/10 pb-3">
+            <li key={p.id} className="border-b border-line pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="font-medium">{p.label ?? p.indexUrl}</div>
-                  <a href={p.indexUrl} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-black/50 underline">
+                  <a href={p.indexUrl} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-muted underline">
                     {p.indexUrl}
                   </a>
-                  <div className="mt-1 text-xs text-black/50">
+                  <div className="mt-1 text-xs text-muted">
                     {p.providerName ? `${p.providerName} · ` : ""}
                     {p.isActive ? "Active" : "Paused"}
                     {p.lastCrawledAt ? ` · last crawled ${new Date(p.lastCrawledAt).toLocaleString("en-PH")}` : " · never crawled"}
                   </div>
-                  {p.lastError && <div className="mt-1 text-xs text-red-700">Last error: {p.lastError}</div>}
+                  {p.lastError && <div className="mt-1 text-xs text-status-danger">Last error: {p.lastError}</div>}
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
                   <form action={setSourceIndexPageActiveFormAction.bind(null, p.id, !p.isActive)}>
@@ -60,7 +60,7 @@ export default async function AdminSourcePagesPage() {
                     </button>
                   </form>
                   <form action={deleteSourceIndexPageFormAction.bind(null, p.id)}>
-                    <button type="submit" className="text-red-700 underline">
+                    <button type="submit" className="text-status-danger underline">
                       Delete
                     </button>
                   </form>
@@ -78,10 +78,10 @@ export default async function AdminSourcePagesPage() {
           type="url"
           required
           placeholder="https://up.phinma.edu.ph/scholarships"
-          className="rounded border border-black/20 px-2 py-1.5"
+          className="rounded border border-line px-2 py-1.5"
         />
-        <input name="label" placeholder="Label (optional, e.g. PHINMA scholarships)" className="rounded border border-black/20 px-2 py-1.5" />
-        <select name="provider_id" defaultValue="" className="rounded border border-black/20 px-2 py-1.5">
+        <input name="label" placeholder="Label (optional, e.g. PHINMA scholarships)" className="rounded border border-line px-2 py-1.5" />
+        <select name="provider_id" defaultValue="" className="rounded border border-line px-2 py-1.5">
           <option value="">Provider (optional)</option>
           {providers.map((pr) => (
             <option key={pr.id} value={pr.id}>
@@ -89,10 +89,10 @@ export default async function AdminSourcePagesPage() {
             </option>
           ))}
         </select>
-        <button type="submit" className="w-fit rounded border border-black px-3 py-1.5">
+        <button type="submit" className="w-fit rounded border border-ink px-3 py-1.5">
           Add source page
         </button>
-        <p className="text-xs text-black/50">
+        <p className="text-xs text-muted">
           Must be on <code>*.gov.ph</code> or <code>*.edu.ph</code> (or a curated allowlisted domain).
         </p>
       </form>

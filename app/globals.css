@@ -15,6 +15,10 @@
   --status-closed: #6b6b66;
   --status-soon: #b45309;
   --status-upcoming: #1d4e89;
+  /* Danger/destructive accent -- used by the admin tool for errors, delete
+     actions, and low-confidence badges. Part of the shared token set so admin
+     stops reaching for raw default-Tailwind reds (docs/QA-CHECKLIST.md P2-02). */
+  --status-danger: #b42318;
 }
 
 @theme inline {
@@ -29,6 +33,7 @@
   --color-status-closed: var(--status-closed);
   --color-status-soon: var(--status-soon);
   --color-status-upcoming: var(--status-upcoming);
+  --color-status-danger: var(--status-danger);
 
   --font-serif: var(--font-serif);
   --font-sans: var(--font-sans);
@@ -37,6 +42,19 @@
 body {
   background: var(--paper);
   color: var(--ink);
+}
+
+/* Baseline visible keyboard-focus ring for every form control (docs/QA-CHECKLIST.md
+   P2-06, WCAG 2.4.7). The admin inputs previously relied on UA defaults and some
+   public inputs used focus:outline-none with only a 1px border change; this gives
+   every input/select/textarea a consistent 2px --ink ring on keyboard focus,
+   matching the pill focus-visible pattern. Mouse focus is unaffected
+   (:focus-visible), and reduced-motion is untouched. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
 }
 
 /* Editorial print texture for full-bleed black sections -- pure CSS, zero

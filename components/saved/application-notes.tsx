@@ -30,7 +30,7 @@ export function ApplicationNotes({
         rows={2}
         maxLength={1000}
         placeholder="e.g. still need to ask my teacher for the recommendation letter"
-        className="rounded-md border border-line px-3 py-2 text-sm focus:border-ink focus:outline-none"
+        className="rounded-md border border-line px-3 py-2 text-sm focus:border-ink"
       />
       <div>
         <NotesSubmit hasNote={Boolean(notes)} />

@@ -8,9 +8,9 @@ export const metadata: Metadata = { title: "Source suggestions — Admin" };
 export const dynamic = "force-dynamic";
 
 const CONFIDENCE_STYLE: Record<string, string> = {
-  low: "bg-red-100 text-red-800",
-  medium: "bg-amber-100 text-amber-800",
-  high: "bg-green-100 text-green-800",
+  low: "bg-status-danger/10 text-status-danger",
+  medium: "bg-status-soon/10 text-status-soon",
+  high: "bg-status-open/10 text-status-open",
 };
 
 function formatValue(value: unknown): string {
@@ -35,17 +35,17 @@ export default async function SuggestionsPage() {
           Back to admin
         </Link>
       </div>
-      <p className="mt-2 text-sm text-black/60">
+      <p className="mt-2 text-sm text-muted">
         Proposed changes detected on official source pages, worst confidence first. Approving applies the change and
         re-verifies the scholarship; nothing publishes without your approval.
       </p>
 
       {suggestions.length === 0 ? (
-        <p className="mt-8 text-sm text-black/60">No pending suggestions.</p>
+        <p className="mt-8 text-sm text-muted">No pending suggestions.</p>
       ) : (
         <ul className="mt-8 flex flex-col gap-5 text-sm">
           {suggestions.map((s) => (
-            <li key={s.id} className="border-b border-black/10 pb-5">
+            <li key={s.id} className="border-b border-line pb-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Link href={`/admin/scholarships/${s.scholarshipId}/edit`} className="font-medium underline">
@@ -55,26 +55,26 @@ export default async function SuggestionsPage() {
                     {s.confidence} confidence
                   </span>
                 </div>
-                <span className="text-xs text-black/50">
+                <span className="text-xs text-muted">
                   {s.targetTable}.{s.targetField}
                 </span>
               </div>
 
               <div className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-                <span className="text-black/50">Current:</span>
-                <span className="text-black/70 line-through">{formatValue(s.oldValue)}</span>
-                <span className="text-black/50">Proposed:</span>
+                <span className="text-muted">Current:</span>
+                <span className="text-ink/80 line-through">{formatValue(s.oldValue)}</span>
+                <span className="text-muted">Proposed:</span>
                 <span className="font-medium">{formatValue(s.newValue)}</span>
               </div>
 
-              <p className="mt-2 text-xs text-black/50">
+              <p className="mt-2 text-xs text-muted">
                 Cited from: {s.citingLabels.length > 0 ? s.citingLabels.join(", ") : "(no section)"} ·{" "}
                 {new Date(s.createdAt).toLocaleString("en-PH")}
               </p>
 
               <div className="mt-3 flex items-center gap-4">
                 <form action={approveSuggestionFormAction.bind(null, s.id)}>
-                  <button type="submit" className="rounded border border-black px-3 py-1.5">
+                  <button type="submit" className="rounded border border-ink px-3 py-1.5">
                     Approve &amp; apply
                   </button>
                 </form>
@@ -83,7 +83,7 @@ export default async function SuggestionsPage() {
                     type="text"
                     name="reason"
                     placeholder="Reason (optional)"
-                    className="rounded border border-black/20 px-2 py-1 text-xs"
+                    className="rounded border border-line px-2 py-1 text-xs"
                   />
                   <button type="submit" className="underline">
                     Reject

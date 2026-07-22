@@ -21,7 +21,7 @@ export function ScholarshipForm({
           name="provider_id"
           required
           defaultValue={scholarship?.provider_id ?? ""}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         >
           <option value="" disabled>
             Select a provider
@@ -40,7 +40,7 @@ export function ScholarshipForm({
           name="title"
           required
           defaultValue={scholarship?.title}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -51,7 +51,7 @@ export function ScholarshipForm({
           required
           pattern="[a-z0-9-]+"
           defaultValue={scholarship?.slug}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -60,7 +60,7 @@ export function ScholarshipForm({
         <input
           name="summary"
           defaultValue={scholarship?.summary ?? ""}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -70,7 +70,7 @@ export function ScholarshipForm({
           name="description"
           rows={4}
           defaultValue={scholarship?.description ?? ""}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -80,7 +80,7 @@ export function ScholarshipForm({
           name="coverage_type"
           required
           defaultValue={scholarship?.coverage_type ?? "full"}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         >
           {COVERAGE_TYPES.map((c) => (
             <option key={c} value={c}>
@@ -95,7 +95,7 @@ export function ScholarshipForm({
         <input
           name="benefit_summary"
           defaultValue={scholarship?.benefit_summary ?? ""}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -106,7 +106,7 @@ export function ScholarshipForm({
           type="url"
           required
           defaultValue={scholarship?.official_url}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -116,7 +116,7 @@ export function ScholarshipForm({
           name="application_url"
           type="url"
           defaultValue={scholarship?.application_url ?? ""}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -126,7 +126,7 @@ export function ScholarshipForm({
           name="last_verified_at"
           type="datetime-local"
           defaultValue={scholarship?.last_verified_at?.slice(0, 16) ?? ""}
-          className="mt-1 w-full rounded border border-black/20 px-3 py-2"
+          className="mt-1 w-full rounded border border-line px-3 py-2"
         />
       </div>
 
@@ -135,7 +135,7 @@ export function ScholarshipForm({
         Published (visible to students)
       </label>
 
-      <button type="submit" className="mt-2 w-fit rounded border border-black px-4 py-2 text-sm">
+      <button type="submit" className="mt-2 w-fit rounded border border-ink px-4 py-2 text-sm">
         {scholarship ? "Save changes" : "Create scholarship"}
       </button>
     </form>
