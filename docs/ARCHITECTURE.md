@@ -43,7 +43,7 @@ Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
 | `/trust` | **(FR11)** Public data-freshness dashboard, ISR (1h) |
 | `/scholarships` | **(FR17)** Browse/filter/search without a profile; `searchParams`-driven, zero-JS `<form method="get">` |
 | `/match` | `force-dynamic` (reads auth cookie to decide whether to offer the FR20 digest opt-in); server wrapper around client `match-experience.tsx` (form → results); calls `submitProfileForm` |
-| `/s/[slug]` | Scholarship detail, `force-dynamic` (reads auth cookie to show save/reminder state); includes the FR13 "report an issue" form and the FR21 requirement checklist (persisted for signed-in users, ephemeral for anon) |
+| `/s/[slug]` | Scholarship detail, `force-dynamic` (reads auth cookie to show save/reminder state); includes the FR13 "report an issue" form and the FR21 tracker surface — application-status control + requirement checklist (persisted for signed-in users, ephemeral with a sign-in nudge for anon) |
 | `/shared/[slug]` | **(FR19)** Read-only shared saved-list view, `force-dynamic`; resolves exclusively through the `get_shared_saved_list()` RPC (`DATABASE.md` §6) |
 
 **Auth**

@@ -249,7 +249,7 @@ The MVP explicitly frames itself as the replacement for a student's personal tra
 
 **What it adds (signed-in only, same account gate as save/reminders — FR6/FR7):**
 
-- **Application status** per saved scholarship: `interested → preparing → applied → submitted`, editable on the saved list.
+- **Application status** per scholarship: `interested → preparing → applied → submitted`, editable as an instant tappable segmented control on both the saved list and the scholarship detail page (shared state).
 - **Persisted requirement checklist**: the detail-page checklist (`components/detail/requirement-checklist.tsx`) was previously ephemeral `useState` and reset on every reload; it now writes each toggle to `requirement_checkoffs` for signed-in users. Anonymous visitors keep the ephemeral behavior — **no login wall, no regression**.
 - **Private note** per scholarship (≤1000 chars).
 - **Progress bar** (`done/total` requirements) on each saved-list row, linking to the detail checklist.
