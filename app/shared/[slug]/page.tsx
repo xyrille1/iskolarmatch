@@ -25,7 +25,7 @@ export default async function SharedSavedListPage({ params }: PageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-[62ch] px-6 py-12">
           <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Shared shortlist</p>
           <h1 className="reveal mt-2 font-serif text-4xl font-light leading-tight sm:text-5xl">

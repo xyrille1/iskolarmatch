@@ -8,7 +8,7 @@ export default function PrivacyPage() {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-[62ch] px-6 py-12">
           <h1 className="reveal font-serif text-4xl font-light leading-tight sm:text-5xl">
             Privacy, in plain language.

@@ -91,7 +91,7 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-[62ch] px-6 py-12">
           <Link href="/match" className="link-trace text-sm text-muted">
             ‹ Back to results
