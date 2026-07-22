@@ -1,12 +1,15 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 import { candidateConfidenceRank } from "@/lib/source-discovery/score-candidate";
 import type { CandidateConfidence, CitingSnippet, StoredCandidate } from "@/lib/types/source-discovery";
 
 // FR22 (docs/PRD.md §4.7): the discovery review queue. Admin-only; pending
 // candidates surfaced worst-confidence-first so the riskiest drafts get a human's
-// eyes soonest. Mirrors get-suggestions-queue.ts -- service-role client, called
-// only after requireAdmin() gates the caller.
+// eyes soonest. Mirrors get-suggestions-queue.ts -- service-role client.
+// `_admin` is required (never read) on both exports below so "called only
+// after requireAdmin() gates the caller" lives in the type system, not just a
+// comment (docs/QA-CHECKLIST.md P2-04).
 
 export interface DiscoveryQueueItem {
   id: string;
@@ -28,7 +31,7 @@ interface CandidateRow {
   source_index_pages: { label: string | null; index_url: string } | null;
 }
 
-export async function getPendingCandidates(): Promise<DiscoveryQueueItem[]> {
+export async function getPendingCandidates(_admin: AdminContext): Promise<DiscoveryQueueItem[]> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase
@@ -57,7 +60,7 @@ export async function getPendingCandidates(): Promise<DiscoveryQueueItem[]> {
   return items.sort((a, b) => candidateConfidenceRank(a.confidence) - candidateConfidenceRank(b.confidence));
 }
 
-export async function getPendingCandidateCount(): Promise<number> {
+export async function getPendingCandidateCount(_admin: AdminContext): Promise<number> {
   const supabase = createSupabaseAdminClient();
   const { count } = await supabase
     .from("scholarship_candidates")

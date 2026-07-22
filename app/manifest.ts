@@ -13,7 +13,9 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     background_color: "#ffffff",
-    theme_color: "#0a0a0a",
+    // Matches app/layout.tsx's viewport.themeColor -- kept in agreement
+    // deliberately (docs/QA-CHECKLIST.md P2-07).
+    theme_color: "#ffffff",
     lang: "en-PH",
     categories: ["education", "productivity"],
     icons: [

@@ -19,13 +19,13 @@ interface PageProps {
 }
 
 export default async function EditScholarshipPage({ params }: PageProps) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const { id } = await params;
 
   const [providers, scholarship, pendingSuggestions] = await Promise.all([
-    getProviders(),
-    getAdminScholarshipDetail(id),
-    getPendingSuggestionCountForScholarship(id),
+    getProviders(admin),
+    getAdminScholarshipDetail(admin, id),
+    getPendingSuggestionCountForScholarship(admin, id),
   ]);
   if (!scholarship) notFound();
 

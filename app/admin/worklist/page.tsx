@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 // FR12 (docs/PRD.md §4.1): admin-only companion to the public /trust
 // dashboard (FR11) -- surfaces exactly which records need re-verification.
 export default async function StalenessWorklistPage() {
-  await requireAdmin();
-  const items = await getStalenessWorklist();
+  const admin = await requireAdmin();
+  const items = await getStalenessWorklist(admin);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">

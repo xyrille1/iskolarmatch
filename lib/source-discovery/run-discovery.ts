@@ -176,9 +176,17 @@ async function processIndexPage(
     });
 
     if (error) {
-      // A unique-index collision (a concurrent/rerun duplicate) is expected and
-      // benign; anything else is a real failure worth counting.
-      summary.duplicatesSkipped += 1;
+      // 23505 = unique_violation: a concurrent/rerun duplicate on dedupe_key is
+      // expected and benign. Anything else (constraint/allowlist/schema
+      // failure) is a real error and must not be miscounted as a dupe
+      // (docs/QA-CHECKLIST.md P2-09), or a genuine break silently looks like
+      // "nothing new here."
+      if (error.code === "23505") {
+        summary.duplicatesSkipped += 1;
+      } else {
+        console.error(`[source-discovery] Failed to insert candidate for ${detail.finalUrl}: ${error.message}`);
+        summary.failures += 1;
+      }
       continue;
     }
 

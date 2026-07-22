@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 const PROVIDER_TYPES = ["government", "lgu", "private", "university"] as const;
 
 export default async function AdminProvidersPage() {
-  await requireAdmin();
-  const providers = await getProviders();
+  const admin = await requireAdmin();
+  const providers = await getProviders(admin);
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">

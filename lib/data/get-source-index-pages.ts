@@ -1,9 +1,12 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 
 // FR22 (docs/PRD.md §4.7): the curator-managed registry of official index pages
-// the discovery crawler reads. Admin-only; service-role client, called only
-// after requireAdmin() gates the caller.
+// the discovery crawler reads. Admin-only; service-role client. `_admin` is
+// required (never read) so "called only after requireAdmin() gates the
+// caller" lives in the type system, not just a comment (docs/QA-CHECKLIST.md
+// P2-04).
 
 export interface SourceIndexPageItem {
   id: string;
@@ -27,7 +30,7 @@ interface Row {
   providers: { name: string } | null;
 }
 
-export async function getSourceIndexPages(): Promise<SourceIndexPageItem[]> {
+export async function getSourceIndexPages(_admin: AdminContext): Promise<SourceIndexPageItem[]> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase

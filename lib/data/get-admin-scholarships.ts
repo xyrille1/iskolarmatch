@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 
 export interface AdminScholarshipListItem {
   id: string;
@@ -11,9 +12,10 @@ export interface AdminScholarshipListItem {
 }
 
 // Admin dashboard needs to see unpublished/draft rows too, so this reads via
-// the service-role client -- only ever called after requireAdmin() gates the
-// caller.
-export async function getAdminScholarships(): Promise<AdminScholarshipListItem[]> {
+// the service-role client. `_admin` is required (never read) so the "only
+// ever called after requireAdmin() gates the caller" guarantee lives in the
+// type system, not just a comment (docs/QA-CHECKLIST.md P2-04).
+export async function getAdminScholarships(_admin: AdminContext): Promise<AdminScholarshipListItem[]> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase

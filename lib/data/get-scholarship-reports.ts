@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 import type { ReportReason } from "@/lib/types/report";
 
 export interface ScholarshipReportItem {
@@ -23,8 +24,10 @@ interface ReportRow {
 }
 
 // FR13 (docs/PRD.md §4.1): admin-only unresolved moderation queue, oldest
-// first. Only ever called after requireAdmin() gates the caller.
-export async function getUnresolvedScholarshipReports(): Promise<ScholarshipReportItem[]> {
+// first. `_admin` is required (never read) so "only ever called after
+// requireAdmin() gates the caller" lives in the type system, not just a
+// comment (docs/QA-CHECKLIST.md P2-04).
+export async function getUnresolvedScholarshipReports(_admin: AdminContext): Promise<ScholarshipReportItem[]> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase

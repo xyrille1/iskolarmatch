@@ -23,8 +23,8 @@ const CONFIDENCE_STYLE: Record<string, string> = {
 // page to add rules/requirements/deadline before publishing. Nothing here
 // auto-publishes. Mirrors app/admin/suggestions/page.tsx.
 export default async function DiscoveriesPage() {
-  await requireAdmin();
-  const [candidates, providers] = await Promise.all([getPendingCandidates(), getProviders()]);
+  const admin = await requireAdmin();
+  const [candidates, providers] = await Promise.all([getPendingCandidates(admin), getProviders(admin)]);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">

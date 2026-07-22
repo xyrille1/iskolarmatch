@@ -32,6 +32,9 @@ export default async function LandingPage() {
 
       <main id="main-content" className="flex-1">
         <section className="relative overflow-hidden px-6 py-20 sm:py-28">
+          {/* "est. 2026" is a real founding-year constant (when IskolarMatch
+              launched), not a copyright year -- intentionally hardcoded, unlike
+              site-footer.tsx's © year (docs/QA-CHECKLIST.md P2-08). */}
           <span
             aria-hidden
             className="marginalia-vertical absolute right-6 top-20 hidden text-[11px] font-medium uppercase tracking-[0.2em] text-muted sm:block"

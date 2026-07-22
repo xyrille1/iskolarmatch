@@ -11,11 +11,11 @@ export const metadata: Metadata = { title: "Admin — IskolarMatch" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const [scholarships, pendingSuggestions, pendingDiscoveries] = await Promise.all([
-    getAdminScholarships(),
-    getPendingSuggestionCount(),
-    getPendingCandidateCount(),
+    getAdminScholarships(admin),
+    getPendingSuggestionCount(admin),
+    getPendingCandidateCount(admin),
   ]);
 
   return (

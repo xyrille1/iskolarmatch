@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { AppBootSplash } from "@/components/layout/app-boot-splash";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { siteUrl } from "@/lib/site-url";
 
 const fraunces = Fraunces({
   variable: "--font-serif",
@@ -21,7 +20,7 @@ const description =
   "IskolarMatch matches Filipino students to CHED, DOST-SEI, and local scholarships they actually qualify for, then tracks the deadlines.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(siteUrl()),
   title: "IskolarMatch — Find scholarships you actually qualify for",
   description,
   applicationName: "IskolarMatch",
@@ -43,7 +42,7 @@ export const metadata: Metadata = {
     siteName: "IskolarMatch",
     title: "IskolarMatch — Find scholarships you actually qualify for",
     description,
-    url: siteUrl,
+    url: siteUrl(),
     locale: "en_PH",
   },
   twitter: {
@@ -54,6 +53,10 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "IskolarMatch", statusBarStyle: "default" },
 };
 
+// Matches app/manifest.ts's theme_color -- browser-chrome and installed-PWA
+// chrome must agree (docs/QA-CHECKLIST.md P2-07). #ffffff (--paper) rather
+// than the dark --ink/--noir tone since every page's dominant background is
+// the light "paper" surface; the dark noir moment stays scoped to the footer.
 export const viewport: Viewport = {
   themeColor: "#ffffff",
   colorScheme: "light",

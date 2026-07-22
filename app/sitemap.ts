@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getPublishedScholarships } from "@/lib/data/get-published-scholarships";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { siteUrl } from "@/lib/site-url";
 
 // Static public routes. Authenticated (/saved), machine (/api), and
 // user-generated share (/shared) routes are intentionally excluded -- see
@@ -23,10 +22,11 @@ const STATIC_ROUTES: {
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const url = siteUrl();
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = STATIC_ROUTES.map((route) => ({
-    url: `${siteUrl}${route.path}`,
+    url: `${url}${route.path}`,
     lastModified: now,
     changeFrequency: route.changeFrequency,
     priority: route.priority,
@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const scholarships = await getPublishedScholarships();
     scholarshipEntries = scholarships.map((s) => ({
-      url: `${siteUrl}/s/${s.slug}`,
+      url: `${url}/s/${s.slug}`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.7,

@@ -17,8 +17,8 @@ export const dynamic = "force-dynamic";
 // discover-sources cron only ever crawls pages reachable from these. Utilitarian
 // admin styling, matching app/admin/providers/page.tsx.
 export default async function AdminSourcePagesPage() {
-  await requireAdmin();
-  const [pages, providers] = await Promise.all([getSourceIndexPages(), getProviders()]);
+  const admin = await requireAdmin();
+  const [pages, providers] = await Promise.all([getSourceIndexPages(admin), getProviders(admin)]);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">

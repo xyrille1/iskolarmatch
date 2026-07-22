@@ -17,8 +17,8 @@ const REASON_LABELS: Record<string, string> = {
 // FR13 (docs/PRD.md §4.1): curator moderation queue for student-submitted
 // "report an issue" flags. Not public UGC -- admin-only, resolve-and-clear.
 export default async function ReportsPage() {
-  await requireAdmin();
-  const reports = await getUnresolvedScholarshipReports();
+  const admin = await requireAdmin();
+  const reports = await getUnresolvedScholarshipReports(admin);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">

@@ -24,8 +24,8 @@ function formatValue(value: unknown): string {
 // first. Approval routes through the validated admin actions; nothing here
 // auto-publishes. Mirrors app/admin/reports/page.tsx.
 export default async function SuggestionsPage() {
-  await requireAdmin();
-  const suggestions = await getPendingSuggestions();
+  const admin = await requireAdmin();
+  const suggestions = await getPendingSuggestions(admin);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">

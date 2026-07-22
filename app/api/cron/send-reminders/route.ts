@@ -4,6 +4,14 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getManilaTodayIso } from "@/lib/deadline/manila-date";
 import { sendReminderEmail } from "@/lib/email/send-reminder-email";
 import { sendPushNotification, PushSubscriptionExpiredError } from "@/lib/push/send-push-notification";
+import { REMINDER_BATCH_SIZE } from "@/lib/cron/config";
+
+// Explicit runtime/duration budget, matching the crawler crons
+// (docs/QA-CHECKLIST.md P1-05) -- this loop makes external calls (Resend, Web
+// Push, auth.admin.getUserById) per row, so it needs the same declared ceiling
+// `watch`/`discover` already have instead of an implicit, undeclared one.
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 interface DueReminderRow {
   id: string;
@@ -26,6 +34,9 @@ export async function GET(request: Request) {
   const supabase = createSupabaseAdminClient();
   const today = getManilaTodayIso();
 
+  // Batched, oldest-due first: `sent_at` is only ever set on success, so an
+  // unprocessed remainder past the batch cap is simply due again (and picked
+  // up first) on the next run -- never re-sent, never dropped.
   const { data: dueRows, error } = await supabase
     .from("reminders")
     .select(
@@ -33,7 +44,9 @@ export async function GET(request: Request) {
        scholarships ( title, slug, deadline_cycles ( closes_at, status ) )`
     )
     .is("sent_at", null)
-    .lte("remind_on", today);
+    .lte("remind_on", today)
+    .order("remind_on", { ascending: true })
+    .limit(REMINDER_BATCH_SIZE);
 
   if (error) {
     return NextResponse.json({ error: "Failed to load due reminders." }, { status: 500 });
