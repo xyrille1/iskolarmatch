@@ -69,6 +69,37 @@ if (url && anonKey) {
 
       expect(error).not.toBeNull();
     });
+
+    // FR21 application-tracker tables are owner-scoped to `authenticated`
+    // (user_id = auth.uid()) with NO anon policy -- default-deny for anon,
+    // exactly like reminders / saved_scholarships. An anon caller sees nothing
+    // and can write nothing.
+    it.each(['application_progress', 'requirement_checkoffs'])(
+      'cannot read %s as anon (owner-only, no anon policy)',
+      async (table) => {
+        const { data } = await supabase.from(table).select('id');
+        expect(data ?? []).toHaveLength(0);
+      }
+    );
+
+    it('cannot insert application_progress as anon (no anon write policy exists)', async () => {
+      const { error } = await supabase.from('application_progress').insert({
+        user_id: '00000000-0000-0000-0000-000000000000',
+        scholarship_id: '00000000-0000-0000-0000-000000000000',
+        status: 'applied',
+      });
+
+      expect(error).not.toBeNull();
+    });
+
+    it('cannot insert requirement_checkoffs as anon (no anon write policy exists)', async () => {
+      const { error } = await supabase.from('requirement_checkoffs').insert({
+        user_id: '00000000-0000-0000-0000-000000000000',
+        requirement_id: '00000000-0000-0000-0000-000000000000',
+      });
+
+      expect(error).not.toBeNull();
+    });
   });
 } else {
   describe.skip('RLS: anon access to scholarships (skipped: TEST_SUPABASE_URL / TEST_SUPABASE_ANON_KEY not set)', () => {
