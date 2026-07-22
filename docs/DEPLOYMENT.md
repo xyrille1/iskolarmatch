@@ -53,14 +53,19 @@ This list is exhaustive — a repo-wide grep for `process.env.` turns up no othe
     { "path": "/api/cron/refresh-deadlines", "schedule": "0 16 * * *" },
     { "path": "/api/cron/send-reminders", "schedule": "15 16 * * *" },
     { "path": "/api/cron/send-digest", "schedule": "30 16 * * 1" },
-    { "path": "/api/cron/watch-sources", "schedule": "45 16 * * 1" }
+    { "path": "/api/cron/watch-sources", "schedule": "45 16 * * 1" },
+    { "path": "/api/cron/discover-sources", "schedule": "0 17 * * 1" }
   ]
 }
 ```
 
-All times are UTC and correspond to ~00:00 / 00:15 / 00:30 / 00:45 **Asia/Manila** (UTC+8) — the daily jobs match the app's `getManilaTodayIso()` deadline-correctness pinning (`ARCHITECTURE.md` §6); the two Monday jobs (`send-digest`, `watch-sources`) run weekly. Vercel calls these paths with a header Vercel itself controls; the handlers additionally require the `CRON_SECRET` bearer token, so the secret — not "is this Vercel" — is the actual authorization check. If you move off Vercel, you must replace the trigger mechanism (e.g. Supabase scheduled Edge Function or `pg_cron`) but the handlers and secret check stay the same.
+All times are UTC and correspond to ~00:00 / 00:15 / 00:30 / 00:45 / 01:00 **Asia/Manila** (UTC+8) — the daily jobs match the app's `getManilaTodayIso()` deadline-correctness pinning (`ARCHITECTURE.md` §6); the three Monday jobs (`send-digest`, `watch-sources`, `discover-sources`) run weekly. Vercel calls these paths with a header Vercel itself controls; the handlers additionally require the `CRON_SECRET` bearer token, so the secret — not "is this Vercel" — is the actual authorization check. If you move off Vercel, you must replace the trigger mechanism (e.g. Supabase scheduled Edge Function or `pg_cron`) but the handlers and secret check stay the same.
 
-**`watch-sources` (FR10 source-watcher)** is Node-runtime (`export const runtime = "nodejs"`, needs jsdom / pdf-parse / `node:dns`) with `maxDuration = 60`. It processes published scholarships in a stale-first batch (`WATCH_BATCH_SIZE`, `lib/source-watcher/config.ts`) so a single run stays within the function budget as the catalogue grows. **Pre-deploy check:** confirm the target Vercel plan's cron count and function-duration ceilings allow four crons (Vercel's Hobby plan has historically capped daily cron invocations — verify the current limit before relying on this in production). Groq's free tier has per-minute rate limits; the deterministic change-gate means the LLM is only called for scholarships whose source page actually changed, so real call volume is far below one-per-scholarship-per-week.
+**`watch-sources` (FR10 source-watcher)** is Node-runtime (`export const runtime = "nodejs"`, needs jsdom / pdf-parse / `node:dns`) with `maxDuration = 60`. It processes published scholarships in a stale-first batch (`WATCH_BATCH_SIZE`, `lib/source-watcher/config.ts`) so a single run stays within the function budget as the catalogue grows. Groq's free tier has per-minute rate limits; the deterministic change-gate means the LLM is only called for scholarships whose source page actually changed, so real call volume is far below one-per-scholarship-per-week.
+
+**`discover-sources` (FR22 discovery crawler)** is likewise Node-runtime, `maxDuration = 60`. It processes registered index pages in a stale-first batch (`DISCOVER_INDEX_BATCH_SIZE`) with a hard per-run ceiling on new detail-page fetches (`DISCOVER_MAX_DETAIL_PAGES_PER_RUN`) and a per-domain crawl delay (`lib/source-discovery/config.ts`), so one run stays within the budget and stays polite. It honors `robots.txt` and sends a self-identifying User-Agent (see `SECURITY.md` §3.11).
+
+**Pre-deploy check (cron count):** this brings the total to **five** crons. Vercel's Hobby plan has historically capped cron count/invocations — confirm the target plan's ceilings before relying on all five. If the plan is too limited, the discovery handler is portable: trigger it from a **GitHub Actions scheduled workflow** (`.github/workflows/`) that `curl`s the route with the `CRON_SECRET` bearer, instead of a `vercel.json` entry. Not a code blocker either way — the handler is correct regardless — but a scheduled job that never fires (or times out) fails silently.
 
 ## 4. Build, Test & Release (`package.json` scripts)
 
@@ -99,5 +104,5 @@ Both are easy to miss because the failure mode is silent (no error, no 500 — j
 
 - **No CI/CD pipeline.** QA is a manual pre-push checklist (`docs/iskolar-version-control.md` §7), not an enforced gate — a bad push can reach `main`/production if the checklist is skipped.
 - **No separate staging environment** with its own Supabase project — preview deployments exist but DB-backed routes in them would hit whatever Supabase project is configured, which needs care.
-- **Cron is Vercel-specific.** Migrating hosting providers requires re-implementing the trigger mechanism for `refresh-deadlines`/`send-reminders`/`send-digest`/`watch-sources` (the handlers themselves are portable).
-- **Vercel cron/plan limits not yet confirmed for four crons.** The FR10 `watch-sources` job brings the total to four; verify the deployment plan's cron-count and function-duration limits before relying on it (see §3). Not a code blocker — the handler is correct regardless — but a scheduled job that never fires (or times out) fails silently.
+- **Cron is Vercel-specific.** Migrating hosting providers requires re-implementing the trigger mechanism for `refresh-deadlines`/`send-reminders`/`send-digest`/`watch-sources`/`discover-sources` (the handlers themselves are portable).
+- **Vercel cron/plan limits not yet confirmed for five crons.** The FR22 `discover-sources` job brings the total to five; verify the deployment plan's cron-count and function-duration limits before relying on it (see §3). If the plan is too limited, trigger `discover-sources` (and/or `watch-sources`) from a GitHub Actions scheduled workflow instead — same `CRON_SECRET` bearer. Not a code blocker — the handlers are correct regardless — but a scheduled job that never fires (or times out) fails silently.
