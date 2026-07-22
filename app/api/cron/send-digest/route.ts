@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { verifyCronSecret } from "@/lib/security/verify-cron-secret";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { buildScholarshipMatches, type ScholarshipRow } from "@/lib/matching";
+import { buildScholarshipMatches } from "@/lib/matching";
+import { parseScholarshipRows } from "@/lib/matching/scholarship-row-schema";
 import { sendDigestEmail } from "@/lib/email/send-digest-email";
 import type { Profile } from "@/lib/types/profile";
 import { DIGEST_BATCH_SIZE } from "@/lib/cron/config";
@@ -60,7 +61,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to load digest inputs." }, { status: 500 });
   }
 
-  const rows = scholarshipRows as unknown as ScholarshipRow[];
+  const rows = parseScholarshipRows(scholarshipRows, "send-digest");
 
   let sent = 0;
   let skipped = 0;

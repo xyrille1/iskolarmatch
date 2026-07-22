@@ -2,7 +2,8 @@
 
 import { headers } from "next/headers";
 import { profileSchema, type Profile } from "@/lib/types/profile";
-import { buildScholarshipMatches, type MatchProfileResult, type ScholarshipRow } from "@/lib/matching";
+import { buildScholarshipMatches, type MatchProfileResult } from "@/lib/matching";
+import { parseScholarshipRows } from "@/lib/matching/scholarship-row-schema";
 import { createSupabaseClient } from "@/lib/supabase/client";
 import { checkRateLimit } from "@/lib/security/rate-limit";
 
@@ -41,7 +42,7 @@ export async function matchProfile(profile: Profile): Promise<MatchProfileResult
     throw new Error("Failed to load scholarships for matching.");
   }
 
-  const rows = (data ?? []) as unknown as ScholarshipRow[];
+  const rows = parseScholarshipRows(data, "match-profile");
   return buildScholarshipMatches(rows, profile);
 }
 

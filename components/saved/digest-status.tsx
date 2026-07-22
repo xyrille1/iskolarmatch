@@ -31,6 +31,7 @@ export function DigestStatus({ status }: { status: SavedProfileStatus }) {
         Email me weekly when new scholarships match my saved profile
       </label>
       <button
+        type="button"
         disabled={isPending}
         onClick={() => startTransition(async () => {
           await deleteSavedProfile();

@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "eval:source-watcher": "tsx --conditions=react-server lib/source-watcher/eval/run-eval.ts",
     "db:reset": "supabase db reset"
@@ -31,16 +32,16 @@
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^26",
+    "@types/node": "26.1.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
-    "@vitest/coverage-v8": "^4.1.10",
-    "eslint": "^10",
+    "@vitest/coverage-v8": "4.1.10",
+    "eslint": "10.7.0",
     "eslint-config-next": "16.2.10",
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
-    "typescript": "^7",
-    "vitest": "^4.1.10"
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
   }
 }

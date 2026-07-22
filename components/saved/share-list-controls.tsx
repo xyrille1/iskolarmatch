@@ -29,7 +29,7 @@ export function ShareListControls({ initialSlug, siteUrl }: { initialSlug: strin
 
   if (!shareUrl) {
     return (
-      <PillButton variant="outline" disabled={isPending} onClick={regenerate}>
+      <PillButton type="button" variant="outline" disabled={isPending} onClick={regenerate}>
         Share my list
       </PillButton>
     );
@@ -41,10 +41,10 @@ export function ShareListControls({ initialSlug, siteUrl }: { initialSlug: strin
         Share link: <span className="break-all text-ink">{shareUrl}</span>
       </p>
       <div className="flex items-center gap-4">
-        <PillButton variant="outline" disabled={isPending} onClick={regenerate}>
+        <PillButton type="button" variant="outline" disabled={isPending} onClick={regenerate}>
           Regenerate
         </PillButton>
-        <button disabled={isPending} onClick={revoke} className="text-muted underline disabled:opacity-50">
+        <button type="button" disabled={isPending} onClick={revoke} className="text-muted underline disabled:opacity-50">
           Revoke
         </button>
       </div>

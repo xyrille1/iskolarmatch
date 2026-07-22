@@ -104,6 +104,7 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
           View details
         </PillLink>
         <button
+          type="button"
           disabled={isPending}
           onClick={() => startTransition(() => unsaveScholarship(item.scholarshipId))}
           className="text-sm text-muted underline disabled:opacity-50"

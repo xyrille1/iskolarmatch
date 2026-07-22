@@ -138,7 +138,7 @@ export function MatchResults({
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12">
-      <button onClick={onStartOver} className="text-sm text-muted underline">
+      <button type="button" onClick={onStartOver} className="text-sm text-muted underline">
         ‹ Start over
       </button>
 
@@ -202,6 +202,7 @@ export function MatchResults({
         <section className="mt-12">
           {!showNotEligible ? (
             <button
+              type="button"
               onClick={() => setShowNotEligible(true)}
               className="min-h-[44px] rounded-full border border-ink px-6 py-3 text-sm"
             >
