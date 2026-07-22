@@ -55,23 +55,32 @@ export function RequirementChecklist({
   }
 
   return (
-    <ul className="flex flex-col gap-3">
-      {requirements.map((req) => (
-        <li key={req.id}>
-          <label className="flex min-h-[44px] items-start gap-3">
-            <input
-              type="checkbox"
-              checked={checked.has(req.id)}
-              onChange={() => toggle(req.id)}
-              className="mt-1 h-5 w-5"
-            />
-            <span>
-              {req.label}
-              {!req.isMandatory && <span className="ml-2 text-sm text-muted">(optional)</span>}
-            </span>
-          </label>
-        </li>
-      ))}
-    </ul>
+    <>
+      {isSignedIn && (
+        <p className="mb-4 text-sm text-muted" aria-live="polite">
+          {checked.size === requirements.length && requirements.length > 0
+            ? "All requirements checked ✓"
+            : `${checked.size} of ${requirements.length} checked`}
+        </p>
+      )}
+      <ul className="flex flex-col gap-3">
+        {requirements.map((req) => (
+          <li key={req.id}>
+            <label className="flex min-h-[44px] items-start gap-3">
+              <input
+                type="checkbox"
+                checked={checked.has(req.id)}
+                onChange={() => toggle(req.id)}
+                className="mt-1 h-5 w-5"
+              />
+              <span>
+                {req.label}
+                {!req.isMandatory && <span className="ml-2 text-sm text-muted">(optional)</span>}
+              </span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

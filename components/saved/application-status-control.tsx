@@ -4,8 +4,10 @@ import { setApplicationStatusFormAction } from "@/lib/actions/application-tracke
 import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/types/application-tracker";
 import { APPLICATION_STATUS_LABELS } from "@/lib/tracker/progress";
 
-// FR21: per-scholarship application status. A plain form + submit button so it
-// degrades without JS, mirroring the reminder <select> in saved-item.tsx.
+// FR21: per-scholarship application status as a tappable segmented control.
+// One form with several submit buttons -- each carries its own `status` value,
+// so it works WITHOUT JS (native submit) and, with JS, is an instant Server
+// Action + revalidation. Active pill reflects server truth after the round-trip.
 export function ApplicationStatusControl({
   scholarshipId,
   status,
@@ -14,25 +16,34 @@ export function ApplicationStatusControl({
   status: ApplicationStatus;
 }) {
   return (
-    <form action={setApplicationStatusFormAction.bind(null, scholarshipId)} className="flex items-center gap-3">
-      <label htmlFor={`status-${scholarshipId}`} className="text-sm text-muted">
-        Status
-      </label>
-      <select
-        id={`status-${scholarshipId}`}
-        name="status"
-        defaultValue={status}
-        className="min-h-[44px] rounded-md border border-line px-3 py-2 text-sm"
-      >
-        {APPLICATION_STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {APPLICATION_STATUS_LABELS[s]}
-          </option>
-        ))}
-      </select>
-      <button type="submit" className="min-h-[44px] rounded-full border border-ink px-4 text-sm">
-        Save
-      </button>
+    <form action={setApplicationStatusFormAction.bind(null, scholarshipId)}>
+      <fieldset className="m-0 border-0 p-0">
+        <legend className="mb-2 text-xs font-medium uppercase tracking-[0.12em] text-muted">
+          Application status
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {APPLICATION_STATUSES.map((s) => {
+            const active = s === status;
+            return (
+              <button
+                key={s}
+                type="submit"
+                name="status"
+                value={s}
+                aria-pressed={active}
+                className={[
+                  "min-h-[44px] rounded-full px-4 text-sm transition-colors",
+                  active
+                    ? "bg-ink text-paper"
+                    : "border border-line text-ink hover:border-ink",
+                ].join(" ")}
+              >
+                {APPLICATION_STATUS_LABELS[s]}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
     </form>
   );
 }
