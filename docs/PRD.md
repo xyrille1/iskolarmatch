@@ -199,7 +199,7 @@ A pilot cohort (even 20–30 real students) completes profile → saves ≥1 rel
 
 The MVP (FR1–FR9) proved the core loop works: verified matching + deadline tracking beats a spreadsheet. This backlog is not a random feature wishlist — every item is chosen to deepen the product's actual differentiator (**verified, current data** — see the Appendix rationale below) or to add real matching depth and return-visit value, without violating the non-goals in §1.3 or the data-minimization posture in `SECURITY.md` (SEC-G1). Three directions were prioritized for this round: **trust & data-freshness**, **matching depth & UX**, and **engagement & retention**. A fourth direction — reach & inclusion (i18n/Tagalog UI, deeper LGU/barangay coverage, admin bulk-import) — was considered and deliberately deferred; see §1.9.
 
-**FR11–FR20 are all built** — see `ARCHITECTURE.md` §3–4 for the routes/actions, `DATABASE.md` §2 for the schema (migrations `20260101000007`–`20260101000011`), and `SECURITY.md` §3.9 for the new anon-write (FR13) and SEC-G1-exception (FR20) controls. The suggested phasing in §4.4 was followed in build order; every "must," "never," and security note below was honored as written, not loosened during implementation.
+**FR11–FR21 are all built** — see `ARCHITECTURE.md` §3–4 for the routes/actions, `DATABASE.md` §2 for the schema (migrations `20260101000007`–`20260101000011`, plus `20260101000013` for FR21), and `SECURITY.md` §3.9 for the new anon-write (FR13) and SEC-G1-exception (FR20) controls. The suggested phasing in §4.4 was followed in build order; every "must," "never," and security note below was honored as written, not loosened during implementation. FR21 (the application tracker) was added after the FR11–FR20 round as the natural next post-save engagement step; see §4.6.
 
 ## 4.1 Trust & Data Freshness
 
@@ -225,6 +225,7 @@ The MVP (FR1–FR9) proved the core loop works: verified matching + deadline tra
 | FR18 | PWA + Web Push reminders as an alternative/addition to email — free Web Push API + VAPID keys, no per-message cost (unlike SMS). Resolves the §1.9 open question on notifications beyond email; SMS remains explicitly out of scope on cost grounds. |
 | FR19 | Shareable/exportable saved list — a signed-in user generates a read-only share link (random unguessable slug, not tied to their email) or a print/PDF-friendly view of their saved shortlist, e.g. to send to a parent or guidance counselor. Must be served via a `SECURITY DEFINER` RPC or service-role-backed path returning only scholarship fields — **never** a client-facing query that could expose `user_id`/email through a future join change, mirroring the existing `is_admin()` pattern. |
 | FR20 | **(SEC-G1 exception — flagged, not default)** Opt-in weekly "new matches for you" digest email. Requires persisting a signed-in user's profile answers, **only for users who explicitly opt in** — the one item in this backlog that changes the current zero-persisted-profile posture (`SECURITY.md` SEC-G1). Must ship last, with its own explicit sign-off, gated on a prior `SECURITY.md`/`DATABASE.md` amendment: a new opt-in `saved_profiles` table (RLS mirroring `reminders`' owner-CRUD via `auth.uid()`; stores the whole `Profile` as `jsonb` rather than duplicated columns; remember the `GRANT` migration `DATABASE.md` §5 warns is easy to miss). Named `saved_profiles`, deliberately **not** `student_profiles`, so `DATABASE.md`'s "Deferred / not implemented" list continues to read accurately once this ships. |
+| FR21 | **Application progress tracker** — turns the saved list into the "spreadsheet replacement" the PRD positions the product as (§1.1). For **signed-in** users only: (a) a per-scholarship **application status** (`interested → preparing → applied → submitted`); (b) the requirement checklist on detail pages now **persists** (previously ephemeral `useState`, reset on reload); (c) a short private **note** per scholarship; and (d) a requirement-progress bar (`done/total`) on the saved list. Deterministic, no LLM. Two new **owner-scoped, authenticated-write** tables — `application_progress`, `requirement_checkoffs` (RLS via `auth.uid()`, mirroring `reminders`/`saved_scholarships`; `GRANT`s included per `DATABASE.md` §5). This is **not** anon-write (contrast FR13) and does **not** persist the matching profile, so the zero-persisted-profile posture (`SECURITY.md` SEC-G1, and FR20's opt-in exception) is **unchanged**. Anonymous visitors keep the ephemeral checklist — no login wall. Migration `20260101000013`; see §4.6. |
 
 ## 4.4 Suggested Phasing
 
@@ -240,7 +241,20 @@ Mirrors the §3.1 phase-table style; risk-ordered rather than theme-ordered, sin
 
 ## 4.5 Reaffirmed Non-Goals
 
-Nothing in this backlog introduces application/document submission, payments, or AI-generated eligibility decisions — FR14's guidance text is curator-authored, not model-generated. No feature defaults anonymous users into a persisted profile: FR20 is opt-in, signed-in-only, and the sole exception to the zero-persisted-profile posture, called out as such rather than slipped in silently.
+Nothing in this backlog introduces application/document submission, payments, or AI-generated eligibility decisions — FR14's guidance text is curator-authored, not model-generated. No feature defaults anonymous users into a persisted profile: FR20 is opt-in, signed-in-only, and the sole exception to the zero-persisted-profile posture, called out as such rather than slipped in silently. FR21 (§4.6) persists per-scholarship *tracking* state, not the matching profile, so it does **not** touch that posture.
+
+## 4.6 Application Tracker (FR21)
+
+The MVP explicitly frames itself as the replacement for a student's personal tracking spreadsheet (§1.1). FR11–FR20 deepened discovery, matching, trust, and notifications, but the **post-save** experience still stopped at bookmark + reminder — the saved list did none of the things a spreadsheet does after you find a scholarship. FR21 closes that gap and is the highest **return-visit** feature in the product (a student reopens it every time they work on an application — the §4.3 engagement/retention goal).
+
+**What it adds (signed-in only, same account gate as save/reminders — FR6/FR7):**
+
+- **Application status** per scholarship: `interested → preparing → applied → submitted`, editable as an instant tappable segmented control on both the saved list and the scholarship detail page (shared state).
+- **Persisted requirement checklist**: the detail-page checklist (`components/detail/requirement-checklist.tsx`) was previously ephemeral `useState` and reset on every reload; it now writes each toggle to `requirement_checkoffs` for signed-in users. Anonymous visitors keep the ephemeral behavior — **no login wall, no regression**.
+- **Private note** per scholarship (≤1000 chars).
+- **Progress bar** (`done/total` requirements) on each saved-list row, linking to the detail checklist.
+
+**Alignment / boundaries honored:** deterministic and LLM-free; owner-scoped RLS via `auth.uid()` mirroring `reminders`/`saved_scholarships`; server actions take `user_id` from the session, never a request param (`SECURITY.md` §3.4); **authenticated-owner write, not anon-write** (contrast FR13); `GRANT`s shipped in the same migration (`DATABASE.md` §5). It does **not** persist the matching profile (that remains FR20's opt-in-only exception), add application/document submission (§1.3 non-goal), or expand the FR19 share payload. Tables: `application_progress`, `requirement_checkoffs` (migration `20260101000013`); actions in `lib/actions/application-tracker.ts`.
 
 ---
 

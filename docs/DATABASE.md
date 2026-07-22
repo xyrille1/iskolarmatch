@@ -13,7 +13,7 @@ _Authoritative schema reference, generated from the actual migrations in `supaba
 | Role | What it can do |
 | --- | --- |
 | `anon` | Read-only, and only rows explicitly exposed by an RLS `select` policy (published scholarships and their children). No write policy exists for this role on any table. |
-| `authenticated` | Same public reads as `anon`, plus owner-scoped reads/writes on `saved_scholarships` and `reminders`, plus a self-check read on `admin_users`. |
+| `authenticated` | Same public reads as `anon`, plus owner-scoped reads/writes on `saved_scholarships`, `reminders`, `push_subscriptions`, `saved_list_shares`, `saved_profiles`, `application_progress`, and `requirement_checkoffs`, plus a self-check read on `admin_users`. |
 | `service_role` | Bypasses RLS entirely. Used **only** server-side, in server actions (`lib/actions/admin.ts`) and cron Route Handlers — never sent to the browser. This is the only role that can write to `providers`, `scholarships`, `eligibility_rules`, `requirements`, `deadline_cycles`, `allowlisted_domains`, `admin_users`, or `audit_log`. |
 
 **Design principle:** every table has RLS **enabled**. There is no table relying on "we just never gave the client that query" — access is enforced at the database layer regardless of what the app code does.
@@ -164,6 +164,28 @@ saved_profiles                                 -- FR20 (PRD.md §4.3): opt-in we
   last_digest_sent_at      timestamptz
   created_at               timestamptz not null default now()
   updated_at               timestamptz not null default now()
+
+application_progress                           -- FR21 (PRD.md §4.6): per-scholarship application
+                                                -- tracking. Added 20260101000013. Owner-scoped,
+                                                -- signed-in only. Tracking state, NOT the matching
+                                                -- profile -- SEC-G1 posture unchanged.
+  id             uuid pk default gen_random_uuid()
+  user_id        uuid not null references auth.users(id) on delete cascade
+  scholarship_id uuid not null references scholarships(id) on delete cascade
+  status         text not null default 'interested'   -- CHECK: interested|preparing|applied|submitted
+  notes          text                                  -- user's own private free text, ≤1000 chars (app-enforced)
+  updated_at     timestamptz not null default now()
+  created_at     timestamptz not null default now()
+  unique(user_id, scholarship_id)               -- one row per (user, scholarship); upsert-idempotent. Has an update policy (status/notes are mutable), unlike saved_scholarships.
+
+requirement_checkoffs                          -- FR21 (PRD.md §4.6): persisted requirement checklist.
+                                                -- Added 20260101000013. Presence = checked, exactly
+                                                -- like saved_scholarships (no update policy).
+  id             uuid pk default gen_random_uuid()
+  user_id        uuid not null references auth.users(id) on delete cascade
+  requirement_id uuid not null references requirements(id) on delete cascade
+  created_at     timestamptz not null default now()
+  unique(user_id, requirement_id)               -- requirement_id is globally unique, so (user, requirement) alone suffices
 ```
 
 ### Admin (service-role only, `authenticated` gets read-only self-checks)
@@ -227,6 +249,8 @@ scholarship_reports_unresolved_idx    on scholarship_reports(created_at) where r
 push_subscriptions_user_id_idx        on push_subscriptions(user_id)
 saved_list_shares_slug_idx            on saved_list_shares(slug)
 saved_profiles_digest_opt_in_idx      on saved_profiles(user_id) where digest_opt_in = true       -- partial
+application_progress_user_id_idx      on application_progress(user_id)
+requirement_checkoffs_user_id_idx     on requirement_checkoffs(user_id)
 ```
 
 The two partial indexes exist specifically to match the exact query shapes RLS policies and the reminder cron use — not general-purpose.
@@ -278,9 +302,17 @@ create policy "owner delete reminders" on reminders for delete to authenticated 
 -- same shape as reminders. saved_list_shares' contents are additionally
 -- readable by anon/authenticated ONLY via get_shared_saved_list() (§6) --
 -- never a direct policy on this table or saved_scholarships.
+
+-- application_progress (FR21): full owner CRUD, same shape as reminders
+-- (status/notes are mutable, so it has an update policy).
+-- requirement_checkoffs (FR21): owner select/insert/delete, NO update policy --
+-- same immutable-toggle shape as saved_scholarships.
+-- Both are authenticated-owner write surfaces (contrast the anon-write
+-- scholarship_reports and the service-role-only source-watcher tables), and
+-- their GRANTs ship in the same migration (20260101000013).
 ```
 
-There is no path — client-side or otherwise — for user A to read or write user B's saved list, reminders, push subscriptions, share link, or saved profile. This is the concrete enforcement of `PRD.md` NFR "Security" and `SECURITY.md` SEC-G2.
+There is no path — client-side or otherwise — for user A to read or write user B's saved list, reminders, push subscriptions, share link, saved profile, application status/notes, or requirement checkoffs. This is the concrete enforcement of `PRD.md` NFR "Security" and `SECURITY.md` SEC-G2.
 
 ### Admin tables
 

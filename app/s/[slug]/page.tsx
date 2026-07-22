@@ -7,7 +7,9 @@ import { OfficialLinkPill } from "@/components/detail/official-link-pill";
 import { Disclaimer } from "@/components/detail/disclaimer";
 import { RequirementChecklist } from "@/components/detail/requirement-checklist";
 import { SaveReminderControls } from "@/components/detail/save-reminder-controls";
+import { ApplicationStatusControl } from "@/components/saved/application-status-control";
 import { ReportIssueForm } from "@/components/detail/report-issue-form";
+import type { ApplicationStatus } from "@/lib/types/application-tracker";
 import { PillLink } from "@/components/ui/pill";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -47,6 +49,8 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
 
   let isSaved = false;
   let reminder: { leadDays: number } | null = null;
+  let checkedRequirementIds: string[] = [];
+  let applicationStatus: ApplicationStatus = "interested";
 
   if (user) {
     const { data: savedRow } = await supabase
@@ -62,6 +66,26 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
       .eq("scholarship_id", scholarship.id)
       .maybeSingle();
     reminder = reminderRow ? { leadDays: reminderRow.lead_days } : null;
+
+    // FR21: which of this scholarship's requirements the signed-in user has
+    // already checked off. RLS scopes this to the owner; we filter to this
+    // scholarship's requirement ids so the client only receives what it renders.
+    const requirementIds = scholarship.requirements.map((r) => r.id);
+    if (requirementIds.length > 0) {
+      const { data: checkoffRows } = await supabase
+        .from("requirement_checkoffs")
+        .select("requirement_id")
+        .in("requirement_id", requirementIds);
+      checkedRequirementIds = (checkoffRows ?? []).map((c) => c.requirement_id as string);
+    }
+
+    // FR21: current application status for this scholarship (absence = "interested").
+    const { data: progressRow } = await supabase
+      .from("application_progress")
+      .select("status")
+      .eq("scholarship_id", scholarship.id)
+      .maybeSingle();
+    if (progressRow) applicationStatus = progressRow.status as ApplicationStatus;
   }
 
   return (
@@ -92,7 +116,10 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
 
           <div className="mt-6">
             {user ? (
-              <SaveReminderControls scholarshipId={scholarship.id} isSaved={isSaved} reminder={reminder} />
+              <div className="flex flex-col gap-4">
+                <SaveReminderControls scholarshipId={scholarship.id} isSaved={isSaved} reminder={reminder} />
+                <ApplicationStatusControl scholarshipId={scholarship.id} status={applicationStatus} />
+              </div>
             ) : (
               <div className="flex flex-wrap gap-3">
                 <PillLink href={`/auth?next=/s/${scholarship.slug}`} variant="outline">
@@ -127,15 +154,27 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
           )}
 
           {scholarship.requirements.length > 0 && (
-            <section className="mt-12">
-              <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Requirements</h2>
-              <div className="mt-2">
+            <section id="requirements" className="mt-12 scroll-mt-24">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Requirements</h2>
+                {!user && (
+                  <Link
+                    href={`/auth?next=/s/${scholarship.slug}`}
+                    className="text-sm text-muted underline hover:text-ink"
+                  >
+                    Sign in to save your progress
+                  </Link>
+                )}
+              </div>
+              <div className="mt-3">
                 <RequirementChecklist
                   requirements={scholarship.requirements.map((r) => ({
                     id: r.id,
                     label: r.label,
                     isMandatory: r.isMandatory,
                   }))}
+                  initialChecked={checkedRequirementIds}
+                  isSignedIn={Boolean(user)}
                 />
               </div>
             </section>

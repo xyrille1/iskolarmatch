@@ -39,8 +39,14 @@ export default async function SavedPage() {
       <main className="flex-1">
         <div className="mx-auto max-w-4xl px-6 py-12">
           <h1 className="reveal font-serif text-4xl font-light leading-tight sm:text-5xl">Saved.</h1>
+          {items.length > 0 && (
+            <p className="mt-3 max-w-[52ch] text-muted">
+              Your application tracker. Set each one&apos;s status, tick off requirements, add notes, and get
+              a reminder before the deadline.
+            </p>
+          )}
 
-          <div className="mt-4 flex flex-wrap items-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center gap-4">
             <PushNotificationToggle vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
           </div>
 

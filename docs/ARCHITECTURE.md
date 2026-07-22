@@ -43,7 +43,7 @@ Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
 | `/trust` | **(FR11)** Public data-freshness dashboard, ISR (1h) |
 | `/scholarships` | **(FR17)** Browse/filter/search without a profile; `searchParams`-driven, zero-JS `<form method="get">` |
 | `/match` | `force-dynamic` (reads auth cookie to decide whether to offer the FR20 digest opt-in); server wrapper around client `match-experience.tsx` (form → results); calls `submitProfileForm` |
-| `/s/[slug]` | Scholarship detail, `force-dynamic` (reads auth cookie to show save/reminder state); includes the FR13 "report an issue" form |
+| `/s/[slug]` | Scholarship detail, `force-dynamic` (reads auth cookie to show save/reminder state); includes the FR13 "report an issue" form and the FR21 tracker surface — application-status control + requirement checklist (persisted for signed-in users, ephemeral with a sign-in nudge for anon) |
 | `/shared/[slug]` | **(FR19)** Read-only shared saved-list view, `force-dynamic`; resolves exclusively through the `get_shared_saved_list()` RPC (`DATABASE.md` §6) |
 
 **Auth**
@@ -55,7 +55,7 @@ Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
 **Session-gated**
 | Route | Notes |
 | --- | --- |
-| `/saved` | `force-dynamic`; redirects to `/auth?next=/saved` if signed out; lists saved scholarships; also surfaces FR18 push opt-in, FR19 share-link controls, FR20 digest status |
+| `/saved` | `force-dynamic`; redirects to `/auth?next=/saved` if signed out; lists saved scholarships; also surfaces FR18 push opt-in, FR19 share-link controls, FR20 digest status, and the **FR21** application tracker per row (status, requirement-progress bar, private note) |
 
 **Admin (role-gated, `force-dynamic`)**
 | Route | Notes |
@@ -91,6 +91,7 @@ All three require a `CRON_SECRET` bearer token (`lib/security/verify-cron-secret
 | `push.ts` | `subscribeToPush(subscription)`, `unsubscribeFromPush(endpoint)` | Session required | **(FR18)** Owner-scoped Web Push subscription CRUD, upserted on `endpoint` |
 | `share.ts` | `createSavedListShare()`, `revokeSavedListShare()` | Session required | **(FR19)** One active share slug per user; regenerating invalidates the previous one. The link's contents are read only through `get_shared_saved_list()` (`DATABASE.md` §6), never a direct table policy |
 | `saved-profile.ts` | `saveProfileForDigest(profile)`, `setDigestOptIn(optIn)`, `deleteSavedProfile()` | Session required | **(FR20)** The one path that persists a signed-in user's profile, and only on explicit opt-in — re-validates with the same `profileSchema` the anonymous match path uses |
+| `application-tracker.ts` | `setApplicationStatus`, `saveApplicationNotes`, `toggleRequirementCheckoff`, + FormData wrappers | Session required (`requireUserId`) | **(FR21)** Owner-scoped via session, never a caller-supplied user ID. Upserts `application_progress` (status/notes) and toggles `requirement_checkoffs` (presence = checked). Zod-validated (status enum, ≤1000-char notes, UUID ids). Authenticated-owner write, not anon-write; persists tracking state only, not the matching profile (SEC-G1 unaffected) |
 
 ## 5. Matching Engine (`lib/matching/`) — pure, deterministic, tested
 
