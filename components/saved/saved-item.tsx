@@ -1,15 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { PillLink } from "@/components/ui/pill";
 import { StatusDot } from "@/components/ui/status-dot";
 import { cancelReminder, setReminderFormAction, unsaveScholarship } from "@/lib/actions/saved";
+import { ApplicationStatusControl } from "@/components/saved/application-status-control";
+import { ApplicationNotes } from "@/components/saved/application-notes";
 import type { SavedScholarshipItem } from "@/lib/data/get-saved-scholarships";
 
 const LEAD_DAY_OPTIONS = [3, 7, 14, 30];
 
 export function SavedItem({ item }: { item: SavedScholarshipItem }) {
   const [isPending, startTransition] = useTransition();
+
+  const progressPct =
+    item.requirementTotal > 0 ? Math.round((item.requirementDone / item.requirementTotal) * 100) : 0;
 
   return (
     <li className="border-b border-line py-8">
@@ -19,6 +25,27 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
         <div className="mt-2">
           <StatusDot status={item.status} closesAt={item.closesAt} opensAt={item.opensAt} />
         </div>
+      )}
+
+      {/* FR21: application status */}
+      <div className="mt-4">
+        <ApplicationStatusControl scholarshipId={item.scholarshipId} status={item.applicationStatus} />
+      </div>
+
+      {/* FR21: requirement-checklist progress, links to the detail checklist */}
+      {item.requirementTotal > 0 && (
+        <Link
+          href={`/s/${item.slug}#requirements`}
+          className="mt-4 flex items-center gap-3"
+          aria-label={`${item.requirementDone} of ${item.requirementTotal} requirements done`}
+        >
+          <span className="h-2 w-40 overflow-hidden rounded-full bg-line" aria-hidden>
+            <span className="block h-full bg-ink" style={{ width: `${progressPct}%` }} />
+          </span>
+          <span className="text-sm text-muted">
+            {item.requirementDone}/{item.requirementTotal} requirements
+          </span>
+        </Link>
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-4">
@@ -65,6 +92,9 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
           </button>
         )}
       </form>
+
+      {/* FR21: private per-scholarship note */}
+      <ApplicationNotes scholarshipId={item.scholarshipId} notes={item.notes} />
     </li>
   );
 }

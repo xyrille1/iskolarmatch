@@ -47,6 +47,7 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
 
   let isSaved = false;
   let reminder: { leadDays: number } | null = null;
+  let checkedRequirementIds: string[] = [];
 
   if (user) {
     const { data: savedRow } = await supabase
@@ -62,6 +63,18 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
       .eq("scholarship_id", scholarship.id)
       .maybeSingle();
     reminder = reminderRow ? { leadDays: reminderRow.lead_days } : null;
+
+    // FR21: which of this scholarship's requirements the signed-in user has
+    // already checked off. RLS scopes this to the owner; we filter to this
+    // scholarship's requirement ids so the client only receives what it renders.
+    const requirementIds = scholarship.requirements.map((r) => r.id);
+    if (requirementIds.length > 0) {
+      const { data: checkoffRows } = await supabase
+        .from("requirement_checkoffs")
+        .select("requirement_id")
+        .in("requirement_id", requirementIds);
+      checkedRequirementIds = (checkoffRows ?? []).map((c) => c.requirement_id as string);
+    }
   }
 
   return (
@@ -127,7 +140,7 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
           )}
 
           {scholarship.requirements.length > 0 && (
-            <section className="mt-12">
+            <section id="requirements" className="mt-12 scroll-mt-24">
               <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Requirements</h2>
               <div className="mt-2">
                 <RequirementChecklist
@@ -136,6 +149,8 @@ export default async function ScholarshipDetailPage({ params }: PageProps) {
                     label: r.label,
                     isMandatory: r.isMandatory,
                   }))}
+                  initialChecked={checkedRequirementIds}
+                  isSignedIn={Boolean(user)}
                 />
               </div>
             </section>
