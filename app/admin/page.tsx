@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getAdminScholarships } from "@/lib/data/get-admin-scholarships";
+import { getPendingSuggestionCount } from "@/lib/data/get-suggestion-counts";
 import { markVerified } from "@/lib/actions/admin";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
 
@@ -10,7 +11,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
-  const scholarships = await getAdminScholarships();
+  const [scholarships, pendingSuggestions] = await Promise.all([
+    getAdminScholarships(),
+    getPendingSuggestionCount(),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-10">
@@ -19,6 +23,14 @@ export default async function AdminDashboardPage() {
         <div className="flex gap-4 text-sm">
           <Link href="/admin/reports" className="underline">
             Reported issues
+          </Link>
+          <Link href="/admin/suggestions" className="underline">
+            Source suggestions
+            {pendingSuggestions > 0 && (
+              <span className="ml-1 rounded-full bg-amber-100 px-1.5 text-xs font-medium text-amber-800">
+                {pendingSuggestions}
+              </span>
+            )}
           </Link>
           <Link href="/admin/worklist" className="underline">
             Staleness worklist
