@@ -4,13 +4,19 @@ test.describe("public, DB-independent pages", () => {
   test("landing page renders the hero and links to /match", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: /find what you actually qualify for/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /find my scholarships/i })).toHaveAttribute("href", "/match");
+    // Scope to the hero (in <main>): the shared footer also links to /match, so
+    // an unscoped locator matches two elements (strict-mode violation).
+    await expect(
+      page.getByRole("main").getByRole("link", { name: /find my scholarships/i })
+    ).toHaveAttribute("href", "/match");
   });
 
   test("landing page footer links to /saved and /about", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("link", { name: "Saved", exact: true })).toHaveAttribute("href", "/saved");
-    await expect(page.getByRole("link", { name: "How it works", exact: true })).toHaveAttribute("href", "/about");
+    // Scope to the footer landmark: "Saved" also appears in the header nav.
+    const footer = page.getByRole("contentinfo");
+    await expect(footer.getByRole("link", { name: "Saved", exact: true })).toHaveAttribute("href", "/saved");
+    await expect(footer.getByRole("link", { name: "How it works", exact: true })).toHaveAttribute("href", "/about");
   });
 
   test("/match shows the profile form with semantic fieldsets", async ({ page }) => {
