@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getAdminScholarships } from "@/lib/data/get-admin-scholarships";
 import { getPendingSuggestionCount } from "@/lib/data/get-suggestion-counts";
+import { getPendingCandidateCount } from "@/lib/data/get-discovery-queue";
 import { markVerified } from "@/lib/actions/admin";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
 
@@ -11,9 +12,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
-  const [scholarships, pendingSuggestions] = await Promise.all([
+  const [scholarships, pendingSuggestions, pendingDiscoveries] = await Promise.all([
     getAdminScholarships(),
     getPendingSuggestionCount(),
+    getPendingCandidateCount(),
   ]);
 
   return (
@@ -31,6 +33,17 @@ export default async function AdminDashboardPage() {
                 {pendingSuggestions}
               </span>
             )}
+          </Link>
+          <Link href="/admin/discoveries" className="underline">
+            Discoveries
+            {pendingDiscoveries > 0 && (
+              <span className="ml-1 rounded-full bg-amber-100 px-1.5 text-xs font-medium text-amber-800">
+                {pendingDiscoveries}
+              </span>
+            )}
+          </Link>
+          <Link href="/admin/source-pages" className="underline">
+            Source pages
           </Link>
           <Link href="/admin/worklist" className="underline">
             Staleness worklist
