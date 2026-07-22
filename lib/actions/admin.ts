@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { logAudit } from "@/lib/actions/log-audit";
 import {
   deadlineCycleInputSchema,
   eligibilityRuleInputSchema,
@@ -11,17 +12,6 @@ import {
   requirementInputSchema,
   scholarshipUpsertSchema,
 } from "@/lib/types/admin";
-
-async function logAudit(
-  actorId: string,
-  action: string,
-  entityType: string,
-  entityId: string | null,
-  detail?: Record<string, unknown>
-) {
-  const supabase = createSupabaseAdminClient();
-  await supabase.from("audit_log").insert({ actor_id: actorId, action, entity_type: entityType, entity_id: entityId, detail });
-}
 
 export async function upsertScholarship(payload: unknown): Promise<{ id: string }> {
   const { userId } = await requireAdmin();
@@ -90,6 +80,25 @@ export async function deleteEligibilityRule(ruleId: string): Promise<void> {
   revalidatePath("/admin");
 }
 
+// FR10 approval routes a single-field change through the same validated write
+// an admin would use by hand -- reusing eligibilityRuleInputSchema so nothing
+// bypasses field/operator validation.
+export async function updateEligibilityRule(ruleId: string, payload: unknown): Promise<void> {
+  const { userId } = await requireAdmin();
+  const parsed = eligibilityRuleInputSchema.parse(payload);
+  const supabase = createSupabaseAdminClient();
+  const { scholarship_id, ...rest } = parsed;
+
+  const { error } = await supabase
+    .from("eligibility_rules")
+    .update({ ...rest, guidance_text: rest.guidance_text || null })
+    .eq("id", ruleId);
+  if (error) throw new Error(`Failed to update eligibility rule: ${error.message}`);
+
+  await logAudit(userId, "update", "eligibility_rule", ruleId, { scholarship_id });
+  revalidatePath("/admin");
+}
+
 export async function addRequirement(payload: unknown): Promise<void> {
   const { userId } = await requireAdmin();
   const parsed = requirementInputSchema.parse(payload);
@@ -110,6 +119,20 @@ export async function deleteRequirement(requirementId: string): Promise<void> {
   if (error) throw new Error("Failed to delete requirement.");
 
   await logAudit(userId, "delete", "requirement", requirementId);
+  revalidatePath("/admin");
+}
+
+// FR10 approval path (see updateEligibilityRule).
+export async function updateRequirement(requirementId: string, payload: unknown): Promise<void> {
+  const { userId } = await requireAdmin();
+  const parsed = requirementInputSchema.parse(payload);
+  const supabase = createSupabaseAdminClient();
+  const { scholarship_id, ...rest } = parsed;
+
+  const { error } = await supabase.from("requirements").update(rest).eq("id", requirementId);
+  if (error) throw new Error(`Failed to update requirement: ${error.message}`);
+
+  await logAudit(userId, "update", "requirement", requirementId, { scholarship_id });
   revalidatePath("/admin");
 }
 
@@ -137,6 +160,23 @@ export async function deleteDeadlineCycle(cycleId: string): Promise<void> {
   if (error) throw new Error("Failed to delete deadline cycle.");
 
   await logAudit(userId, "delete", "deadline_cycle", cycleId);
+  revalidatePath("/admin");
+}
+
+// FR10 approval path (see updateEligibilityRule).
+export async function updateDeadlineCycle(cycleId: string, payload: unknown): Promise<void> {
+  const { userId } = await requireAdmin();
+  const parsed = deadlineCycleInputSchema.parse(payload);
+  const supabase = createSupabaseAdminClient();
+  const { scholarship_id, ...rest } = parsed;
+
+  const { error } = await supabase
+    .from("deadline_cycles")
+    .update({ ...rest, opens_at: rest.opens_at || null, academic_year: rest.academic_year || null })
+    .eq("id", cycleId);
+  if (error) throw new Error(`Failed to update deadline cycle: ${error.message}`);
+
+  await logAudit(userId, "update", "deadline_cycle", cycleId, { scholarship_id });
   revalidatePath("/admin");
 }
 

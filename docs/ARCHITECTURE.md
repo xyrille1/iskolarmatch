@@ -66,6 +66,7 @@ Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
 | `/admin/scholarships/[id]/edit` | Edit scholarship + nested eligibility-rules (incl. FR14 guidance text) / requirements / deadline-cycles panels |
 | `/admin/worklist` | **(FR12)** Staleness worklist — published records nearing/past the 60-day verified threshold |
 | `/admin/reports` | **(FR13)** Moderation queue for student-submitted "report an issue" flags |
+| `/admin/suggestions` | **(FR10)** Source-watcher suggestion queue — per-field proposed changes, worst-confidence first, approve/reject |
 
 Every admin route calls `requireAdmin()` (`lib/auth/require-admin.ts`) individually at the top — **there is no centralized gate**. See §10 and `SECURITY.md` §4 for why that's a documented gap, not an oversight.
 
@@ -154,13 +155,13 @@ Full detail lives in `SECURITY.md`; the architecture-relevant summary:
 
 - **Unit (Vitest, `lib/**/*.test.ts`, `tests/**/*.test.ts`, node env):** full matching-engine coverage, deadline status transitions, URL-allowlist logic, "last verified" staleness logic, Zod schema validation, and an opt-in RLS integration test (`tests/integration/rls.test.ts`, skipped unless `TEST_SUPABASE_URL`/`TEST_SUPABASE_ANON_KEY` are set — runs against a local Supabase stack).
 - **E2E (Playwright, `tests/e2e/`):** `smoke.spec.ts` is deliberately scoped to **DB-independent pages only** (landing, `/match` form rendering + client-side GWA validation, `/about`, `/privacy`, security headers) — DB-backed flows (`/s/[slug]`, `/saved`, `/admin`) are explicitly out of scope today since CI/dev doesn't reliably have a linked Supabase project.
-- **Not covered by any test:** the server actions themselves (only the pure functions they call are unit-tested), the three cron route handlers, admin CRUD flows end-to-end, and email/push sending. The FR19 `get_shared_saved_list()` RPC and the FR13/anon-write RLS posture were verified manually against a local Supabase stack during development (real anon REST calls, real RLS denial checks) rather than in an automated suite — worth converting into `tests/integration/rls.test.ts` cases.
+- **Not covered by any test:** the server actions themselves (only the pure functions they call are unit-tested), the four cron route handlers (incl. the FR10 source-watcher, whose pure P12/P13/P14 functions *are* unit-tested and whose extraction has an opt-in eval), admin CRUD flows end-to-end, and email/push sending. The FR19 `get_shared_saved_list()` RPC and the FR13/anon-write RLS posture were verified manually against a local Supabase stack during development (real anon REST calls, real RLS denial checks) rather than in an automated suite — worth converting into `tests/integration/rls.test.ts` cases.
 
 ## 10. Known Gaps / Divergence from the Original Plan
 
 - **Deadline/reminder/digest jobs run on Vercel Cron + Route Handlers, not a Supabase Edge Function** — simpler to keep the whole app in one deployable, at the cost of coupling cron to Vercel specifically.
 - **Admin gating is per-page/per-action, not centralized.** Next.js 16 renamed `middleware.ts` to `proxy.ts`; the `proxy()` in this repo only refreshes the Supabase session cookie, it does not gate `/admin`. A missed `requireAdmin()` call on a new admin page/action would ship unprotected — worth a lint rule or a shared layout wrapper if the admin surface grows.
-- **FR10 (Phase 2 source-watcher) is not built** — no `source_watch`/`ingestion_suggestions` tables or Edge Function exist yet. This is separate from the FR11–FR20 v2 backlog (`PRD.md` §4), which **is** built.
+- **FR10 (Phase 2 source-watcher) is built** — a weekly Vercel Cron route (`/api/cron/watch-sources`, Node runtime) drives the agentic loop in `lib/source-watcher/run-watch.ts`: fetch (SSRF-guarded) → normalize (Readability / pdf-parse) → deterministic per-section change-gate → RAG-grounded Groq extraction over only the changed sections → deterministic diff vs. the live record → rule-based confidence score → per-field suggestions into `scholarship_suggestions`. Curators approve/reject at `/admin/suggestions`; approval routes through the existing validated admin actions and never auto-publishes. Tables: `source_documents`, `source_sections`, `scholarship_suggestions` (replacing the earlier `source_watch`/`ingestion_suggestions` placeholder names). Deliberately **not** using pgvector/embeddings — the "retrieval" is the deterministic change-gate, which is stronger grounding than similarity search at this scale and keeps the stack on Groq's free tier (Groq has no embeddings endpoint). P12/P13 pure functions are unit-tested; the probabilistic extraction has a separate opt-in eval (`npm run eval:source-watcher`, not in CI).
 - **`/match` is now `force-dynamic`**, not statically prerendered, so it can read the auth cookie for the FR20 digest opt-in — a small latency trade-off (still no external API on the read path) accepted for that one feature.
 - **Web Push (FR18) has no delivery-retry queue** — a failed push is simply dropped for that reminder cycle (email remains the primary, retried-nowhere-either channel); only an *expired* subscription (404/410) is pruned.
 - **No CI** — lint/typecheck/test/build are run manually pre-push per `docs/iskolar-version-control.md`; see `DEPLOYMENT.md` §7.
@@ -176,5 +177,5 @@ Full detail lives in `SECURITY.md`; the architecture-relevant summary:
 7. Deadline cron + reminder emails (done, §6)
 8. Admin tool (done, §7)
 9. QA pass — ongoing; e2e coverage still partial (§9)
-10. **(Phase 2)** Source-watcher — not started
+10. **(Phase 2)** Source-watcher — done: P12 ingestion (fetch/normalize/hash/change-gate + SSRF-safe fetch), P13 extraction (Groq structured output + golden-set eval), P14 confidence scoring + curator queue (`/admin/suggestions`)
 11. **v2 feature backlog** (`PRD.md` §4, FR11–FR20) — done: trust dashboard + staleness worklist (FR11/12), report-an-issue moderation queue (FR13), near-miss guidance + not-eligible explainability (FR14/15), comparison view + browse/filter (FR16/17), Web Push + shareable saved list (FR18/19), opt-in digest (FR20)

@@ -74,7 +74,7 @@ The product's core asset is **verified, current scholarship data**, not the matc
 | FR7  | Save scholarship; view saved list.                                                                                                                           |
 | FR8  | Set/receive email reminder N days before a saved scholarship's deadline.                                                                                     |
 | FR9  | Admin CRUD for providers, scholarships, eligibility rules, requirements, deadline cycles; "mark verified" action stamps `last_verified_at` + curator id.     |
-| FR10 | **(Phase 2)** Source-watcher agent detects changes on official pages and files structured **suggestions** for admin review. Never publishes automatically.   |
+| FR10 | **(Phase 2 — built)** RAG-grounded agentic source-watcher: a weekly cron fetches each published scholarship's official page, deterministically detects which sections changed, runs a Groq-grounded structured extraction over the changed sections, diffs against the live record, scores each proposed field change, and files per-field **suggestions** for curator approval. Never publishes automatically — approval routes through the existing validated admin actions and stamps `last_verified_at`. Tables: `source_documents`, `source_sections`, `scholarship_suggestions`; queue at `/admin/suggestions`. |
 
 See §4 for the v2 feature backlog (FR11–FR20), scoped separately from the shipped MVP requirements above.
 
@@ -135,7 +135,7 @@ Graduating senior-high students and 1st–2nd year college students in **one or 
 
 **OUT (deferred):**
 
-- Automated/agentic ingestion (Phase 2, FR10)
+- ~~Automated/agentic ingestion (Phase 2, FR10)~~ — now built as a curator-suggestion-only source-watcher (see FR10 above). Still OUT: auto-publish, any student-facing chat/Q&A, and any LLM in the matching path.
 - Nationwide coverage
 - Accounts required for browsing
 - SMS/push notifications
@@ -167,7 +167,7 @@ A pilot cohort (even 20–30 real students) completes profile → saves ≥1 rel
 | **P4 — Deadlines & reminders** | Daily status cron (Edge Function), reminder emails (Resend)                   | 3–4 days |
 | **P5 — Admin tool**            | Curator CRUD + mark-verified + full seed of 10–20 records                     | 4–5 days |
 | **P6 — Polish & QA**           | Test plan pass, accessibility, mobile, deploy                                 | 3–4 days |
-| **Phase 2 (post-MVP)**         | Agentic source-watcher (suggestions only, human approval)                     | separate |
+| **Phase 2 (post-MVP) — built** | RAG-grounded agentic source-watcher (P12 ingestion, P13 extraction, P14 confidence + curator queue); suggestions only, human approval | separate |
 
 ## 3.2 Testing Strategy
 

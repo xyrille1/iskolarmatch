@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getProviders } from "@/lib/data/get-providers";
 import { getAdminScholarshipDetail } from "@/lib/data/get-admin-scholarship-detail";
+import { getPendingSuggestionCountForScholarship } from "@/lib/data/get-suggestion-counts";
 import { ScholarshipForm } from "@/components/admin/scholarship-form";
 import { EligibilityRulesPanel } from "@/components/admin/eligibility-rules-panel";
 import { RequirementsPanel } from "@/components/admin/requirements-panel";
@@ -20,7 +22,11 @@ export default async function EditScholarshipPage({ params }: PageProps) {
   await requireAdmin();
   const { id } = await params;
 
-  const [providers, scholarship] = await Promise.all([getProviders(), getAdminScholarshipDetail(id)]);
+  const [providers, scholarship, pendingSuggestions] = await Promise.all([
+    getProviders(),
+    getAdminScholarshipDetail(id),
+    getPendingSuggestionCountForScholarship(id),
+  ]);
   if (!scholarship) notFound();
 
   return (
@@ -33,6 +39,17 @@ export default async function EditScholarshipPage({ params }: PageProps) {
           </button>
         </form>
       </div>
+
+      {pendingSuggestions > 0 && (
+        <div className="mt-4 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          The source-watcher found {pendingSuggestions} pending change
+          {pendingSuggestions === 1 ? "" : "s"} for this scholarship.{" "}
+          <Link href="/admin/suggestions" className="font-medium underline">
+            Review in the suggestion queue
+          </Link>
+          .
+        </div>
+      )}
 
       <div className="mt-6">
         <ScholarshipForm providers={providers} scholarship={scholarship} />

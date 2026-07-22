@@ -10,10 +10,11 @@ _Hosting topology, environment variables, cron scheduling, and release process f
 
 ## 1. Hosting Topology
 
-- **App:** Next.js 16, deployed on **Vercel** (frontend, Server Actions, and the two cron Route Handlers all live in the same deployable — there is no separate backend service).
+- **App:** Next.js 16, deployed on **Vercel** (frontend, Server Actions, and the cron Route Handlers all live in the same deployable — there is no separate backend service).
 - **Data:** **Supabase** (managed Postgres + Auth). RLS is the access-control layer (`DATABASE.md` §5); the app never talks to Postgres directly, only through `@supabase/ssr` / `@supabase/supabase-js`.
-- **Email:** **Resend**, used only by the reminder-sending cron handler.
-- **Scheduling:** **Vercel Cron** (not Supabase Edge Functions / `pg_cron`) triggers the two `app/api/cron/*` Route Handlers — see §3.
+- **Email:** **Resend**, used by the reminder-sending and weekly-digest cron handlers.
+- **AI:** **Groq** (free tier), used only by the FR10 source-watcher cron for structured extraction — no other request path calls an LLM (`SECURITY.md` §3.10, `PRD.md` §2.4).
+- **Scheduling:** **Vercel Cron** (not Supabase Edge Functions / `pg_cron`) triggers the four `app/api/cron/*` Route Handlers — see §3.
 
 There is no separate staging environment defined in the repo today; Vercel preview deployments (per-PR) are the closest equivalent, but they'd need their own Supabase project or a shared dev project to be meaningful for DB-backed routes.
 
@@ -27,10 +28,20 @@ From `.env.example` (source of truth — do not read `.env`/`.env.local` for thi
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key, public — safe to ship to the client; all access it grants is bounded by RLS |
 | `SUPABASE_SERVICE_ROLE_KEY` | Bypasses RLS entirely — **server-only**, used in admin server actions and cron handlers, never in a client component |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin for magic-link redirects; falls back to `http://localhost:3000` in dev |
-| `CRON_SECRET` | Bearer token the two cron Route Handlers require (`lib/security/verify-cron-secret.ts`) |
-| `RESEND_API_KEY` | Resend API key for transactional reminder emails |
+| `CRON_SECRET` | Bearer token every cron Route Handler requires (`lib/security/verify-cron-secret.ts`) |
+| `RESEND_API_KEY` | Resend API key for transactional reminder + digest emails |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PUBLIC_KEY` | Web Push (FR18) public key — the `NEXT_PUBLIC_` half is meant to reach the browser |
+| `VAPID_PRIVATE_KEY` | Web Push private key — **server-only** (`lib/push/send-push-notification.ts`) |
+| `VAPID_SUBJECT` | Web Push contact (`mailto:` or URL) sent to the push service |
+| `GROQ_API_KEY` | Default provider key for the FR10 source-watcher extraction — **server-only** (`lib/groq/client.ts`); Groq's free tier suffices at MVP scale |
+| `GROQ_EXTRACTION_MODEL` | Optional override for the Groq model (defaults to `openai/gpt-oss-120b`, `lib/source-watcher/config.ts`) — set this if the free-tier catalog changes |
+| `LLM_BASE_URL` | Optional. Point the extraction client at any OpenAI-compatible endpoint instead of Groq. Unset ⇒ Groq (`https://api.groq.com/openai/v1`). Example (Gemini): `https://generativelanguage.googleapis.com/v1beta/openai` |
+| `LLM_API_KEY` | Optional. Key for the `LLM_BASE_URL` provider — **server-only**; takes precedence over `GROQ_API_KEY` when set |
+| `LLM_MODEL` | Optional. Model id for the alternate provider — takes precedence over `GROQ_EXTRACTION_MODEL` (e.g. Gemini: `gemini-flash-latest`) |
 
-This list is exhaustive — a repo-wide grep for `process.env.` turns up no other application secrets (no analytics keys, no other third-party APIs). If you add a new integration, add its variable here and to `.env.example` in the same change.
+The extraction client (`lib/groq/client.ts`) speaks the OpenAI-compatible chat-completions protocol over a plain `fetch`, so any conforming provider works by setting the three `LLM_*` vars; leave them unset to stay on Groq. All three keys are **server-only** and never reach the browser.
+
+This list is exhaustive — a repo-wide grep for `process.env.` turns up no other application secrets. If you add a new integration, add its variable here and to `.env.example` in the same change.
 
 ## 3. Cron Jobs
 
@@ -40,12 +51,16 @@ This list is exhaustive — a repo-wide grep for `process.env.` turns up no othe
 {
   "crons": [
     { "path": "/api/cron/refresh-deadlines", "schedule": "0 16 * * *" },
-    { "path": "/api/cron/send-reminders", "schedule": "15 16 * * *" }
+    { "path": "/api/cron/send-reminders", "schedule": "15 16 * * *" },
+    { "path": "/api/cron/send-digest", "schedule": "30 16 * * 1" },
+    { "path": "/api/cron/watch-sources", "schedule": "45 16 * * 1" }
   ]
 }
 ```
 
-Both times are UTC and correspond to ~00:00 / 00:15 **Asia/Manila** (UTC+8) — matching the app's `getManilaTodayIso()` deadline-correctness pinning (`ARCHITECTURE.md` §6). Vercel calls these paths with a header Vercel itself controls; the handlers additionally require the `CRON_SECRET` bearer token, so the secret — not "is this Vercel" — is the actual authorization check. If you move off Vercel, you must replace the trigger mechanism (e.g. Supabase scheduled Edge Function or `pg_cron`) but the handlers and secret check stay the same.
+All times are UTC and correspond to ~00:00 / 00:15 / 00:30 / 00:45 **Asia/Manila** (UTC+8) — the daily jobs match the app's `getManilaTodayIso()` deadline-correctness pinning (`ARCHITECTURE.md` §6); the two Monday jobs (`send-digest`, `watch-sources`) run weekly. Vercel calls these paths with a header Vercel itself controls; the handlers additionally require the `CRON_SECRET` bearer token, so the secret — not "is this Vercel" — is the actual authorization check. If you move off Vercel, you must replace the trigger mechanism (e.g. Supabase scheduled Edge Function or `pg_cron`) but the handlers and secret check stay the same.
+
+**`watch-sources` (FR10 source-watcher)** is Node-runtime (`export const runtime = "nodejs"`, needs jsdom / pdf-parse / `node:dns`) with `maxDuration = 60`. It processes published scholarships in a stale-first batch (`WATCH_BATCH_SIZE`, `lib/source-watcher/config.ts`) so a single run stays within the function budget as the catalogue grows. **Pre-deploy check:** confirm the target Vercel plan's cron count and function-duration ceilings allow four crons (Vercel's Hobby plan has historically capped daily cron invocations — verify the current limit before relying on this in production). Groq's free tier has per-minute rate limits; the deterministic change-gate means the LLM is only called for scholarships whose source page actually changed, so real call volume is far below one-per-scholarship-per-week.
 
 ## 4. Build, Test & Release (`package.json` scripts)
 
@@ -67,7 +82,7 @@ Release flow today is a manual `git push` to the branch Vercel is watching, with
 
 ## 5. Database Migrations
 
-Migrations live in `supabase/migrations/`, applied in filename order (`20260101000001_...` → `20260101000006_...`). `npm run db:reset` runs `supabase db reset` against a local Supabase instance (`supabase/config.toml`, Postgres 17) for local development. Per `SECURITY.md` SEC-G5 and `docs/iskolar-version-control.md`, migrations are **forward-only** — a mistake gets a new migration, not an edited/rebased one, so the schema stays reconstructable from git history alone. Adding a table or policy without a migration file (e.g. via the Supabase dashboard) breaks that guarantee and must be avoided.
+Migrations live in `supabase/migrations/`, applied in filename order (`20260101000001_...` → `20260101000012_...`, the latest being the FR10 source-watcher tables, which include their own `grant ... to service_role` inline). `npm run db:reset` runs `supabase db reset` against a local Supabase instance (`supabase/config.toml`, Postgres 17) for local development. Per `SECURITY.md` SEC-G5 and `docs/iskolar-version-control.md`, migrations are **forward-only** — a mistake gets a new migration, not an edited/rebased one, so the schema stays reconstructable from git history alone. Adding a table or policy without a migration file (e.g. via the Supabase dashboard) breaks that guarantee and must be avoided.
 
 `20260101000006_grant_table_privileges.sql` grants the base table privileges (`SELECT`/`INSERT`/`UPDATE`/`DELETE`) that `anon`/`authenticated`/`service_role` need on every app table. **This is not optional and not implied by RLS policies** — in Postgres, a `create policy ... to anon` only gates access a role already has via `GRANT`; without the matching grant, every query gets `permission denied for table X` regardless of what the policy says. This was actually broken end-to-end (matching, saved list, admin CRUD, cron — every DB read/write) until this migration was added; verify with `tests/integration/rls.test.ts` (see §7) after any new table/role combination, since it's the one thing in this stack a passing `npm run build` will never catch.
 
@@ -84,4 +99,5 @@ Both are easy to miss because the failure mode is silent (no error, no 500 — j
 
 - **No CI/CD pipeline.** QA is a manual pre-push checklist (`docs/iskolar-version-control.md` §7), not an enforced gate — a bad push can reach `main`/production if the checklist is skipped.
 - **No separate staging environment** with its own Supabase project — preview deployments exist but DB-backed routes in them would hit whatever Supabase project is configured, which needs care.
-- **Cron is Vercel-specific.** Migrating hosting providers requires re-implementing the trigger mechanism for `refresh-deadlines`/`send-reminders` (the handlers themselves are portable).
+- **Cron is Vercel-specific.** Migrating hosting providers requires re-implementing the trigger mechanism for `refresh-deadlines`/`send-reminders`/`send-digest`/`watch-sources` (the handlers themselves are portable).
+- **Vercel cron/plan limits not yet confirmed for four crons.** The FR10 `watch-sources` job brings the total to four; verify the deployment plan's cron-count and function-duration limits before relying on it (see §3). Not a code blocker — the handler is correct regardless — but a scheduled job that never fires (or times out) fails silently.
