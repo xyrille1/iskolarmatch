@@ -23,7 +23,7 @@ export default async function MatchPage() {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <MatchExperience isSignedIn={Boolean(user)} />
       </main>
       <SiteFooter />

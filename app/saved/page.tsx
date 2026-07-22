@@ -36,7 +36,7 @@ export default async function SavedPage() {
   return (
     <>
       <SiteHeader />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="mx-auto max-w-4xl px-6 py-12">
           <h1 className="reveal font-serif text-4xl font-light leading-tight sm:text-5xl">Saved.</h1>
           {items.length > 0 && (

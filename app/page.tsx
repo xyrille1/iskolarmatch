@@ -30,7 +30,7 @@ export default async function LandingPage() {
     <>
       <SiteHeader />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <section className="relative overflow-hidden px-6 py-20 sm:py-28">
           <span
             aria-hidden
