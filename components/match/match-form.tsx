@@ -173,7 +173,17 @@ export function MatchForm({ onSuccess }: { onSuccess: (state: MatchFormState) =>
       </fieldset>
 
       <PillButton type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Finding your matches…" : "Show my matches →"}
+        {isPending ? (
+          <>
+            <span
+              aria-hidden
+              className="h-4 w-4 animate-spin rounded-full border-2 border-paper/40 border-t-paper"
+            />
+            Finding your matches…
+          </>
+        ) : (
+          "Show my matches →"
+        )}
       </PillButton>
     </form>
   );

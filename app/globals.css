@@ -94,6 +94,111 @@ body {
   writing-mode: vertical-rl;
 }
 
+/* Skeleton placeholders for loading states (UX doc §170/§307: every screen
+   defines a loading state; results use skeleton tiles). A faint paper sheen
+   sweeps a --line block -- monochrome, matches the editorial palette. Under
+   reduced motion the blanket rule below freezes it to a calm static block. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--line);
+  border-radius: 4px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--paper) 65%, transparent),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* First-paint splash: covers the viewport in paper while fonts/assets load,
+   then fades once document.fonts is ready (see AppBootSplash + its inline
+   script). Never removed from the DOM -- React keeps ownership; we only
+   toggle classes -- so hydration stays clean. The self-running safety
+   animation guarantees the page is never trapped behind it if JS fails. */
+#app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: var(--paper);
+  opacity: 1;
+  transition: opacity 0.5s ease;
+  animation-name: app-splash-safety;
+  animation-duration: 0.5s;
+  animation-delay: 2.2s;
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
+}
+#app-splash.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#app-splash.is-gone {
+  visibility: hidden;
+}
+@keyframes app-splash-safety {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+.app-splash__mark {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 1.125rem;
+}
+.app-splash__dot {
+  height: 0.5rem;
+  width: 0.5rem;
+  border-radius: 9999px;
+  background: var(--ink);
+}
+.app-splash__bar {
+  position: relative;
+  width: 96px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 9999px;
+  background: var(--line);
+}
+.app-splash__bar > span {
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--ink);
+  animation: app-splash-slide 1.1s ease-in-out infinite;
+}
+@keyframes app-splash-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
