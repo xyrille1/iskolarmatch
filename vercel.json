@@ -3,6 +3,7 @@
     { "path": "/api/cron/refresh-deadlines", "schedule": "0 16 * * *" },
     { "path": "/api/cron/send-reminders", "schedule": "15 16 * * *" },
     { "path": "/api/cron/send-digest", "schedule": "30 16 * * 1" },
-    { "path": "/api/cron/watch-sources", "schedule": "45 16 * * 1" }
+    { "path": "/api/cron/watch-sources", "schedule": "45 16 * * 1" },
+    { "path": "/api/cron/discover-sources", "schedule": "0 17 * * 1" }
   ]
 }

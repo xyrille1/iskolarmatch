@@ -57,17 +57,31 @@ export async function getSavedScholarships(): Promise<SavedScholarshipItem[]> {
 
   if (error) throw new Error("Failed to load saved scholarships.");
 
-  const { data: reminderRows } = await supabase
+  // These three sub-queries are supplementary (reminder/progress/checkoff
+  // state layered onto the saved list) -- a failure here degrades that one
+  // row's extra state rather than failing the whole saved-list render, which
+  // still succeeds from `savedRows` above. But a degrade must be OBSERVABLE:
+  // previously these errors were silently discarded, so a partial DB outage
+  // rendered identically to "no reminder / no progress / nothing checked off"
+  // (docs/QA-CHECKLIST.md P2-03b). Logging with context makes that distinguishable
+  // in the server logs even though the page itself still renders.
+  const { data: reminderRows, error: reminderError } = await supabase
     .from("reminders")
     .select("scholarship_id, lead_days, remind_on");
+  if (reminderError) {
+    console.error(`[get-saved-scholarships] Failed to load reminders for user ${user.id}: ${reminderError.message}`);
+  }
 
   const reminderByScholarship = new Map(
     (reminderRows ?? []).map((r) => [r.scholarship_id, { leadDays: r.lead_days, remindOn: r.remind_on }])
   );
 
-  const { data: progressRows } = await supabase
+  const { data: progressRows, error: progressError } = await supabase
     .from("application_progress")
     .select("scholarship_id, status, notes");
+  if (progressError) {
+    console.error(`[get-saved-scholarships] Failed to load application progress for user ${user.id}: ${progressError.message}`);
+  }
 
   const progressByScholarship = new Map(
     (progressRows ?? []).map((p) => [
@@ -76,7 +90,12 @@ export async function getSavedScholarships(): Promise<SavedScholarshipItem[]> {
     ])
   );
 
-  const { data: checkoffRows } = await supabase.from("requirement_checkoffs").select("requirement_id");
+  const { data: checkoffRows, error: checkoffError } = await supabase
+    .from("requirement_checkoffs")
+    .select("requirement_id");
+  if (checkoffError) {
+    console.error(`[get-saved-scholarships] Failed to load requirement checkoffs for user ${user.id}: ${checkoffError.message}`);
+  }
   const checkedIds = new Set((checkoffRows ?? []).map((c) => c.requirement_id as string));
 
   return ((savedRows ?? []) as unknown as SavedRow[])

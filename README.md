@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IskolarMatch
 
-## Getting Started
+A scholarship-finder for Filipino students. Answer a short profile and IskolarMatch
+matches you against a curated, deadline-aware catalog of scholarships — then lets you
+save the ones you want, track each application, and get reminded before a deadline
+closes. Every listing is grounded in an official source, and an LLM-assisted watcher
+keeps the catalog fresh so links don't quietly rot.
 
-First, run the development server:
+Built as a portfolio-grade product: real auth, row-level security, an admin
+human-approval gate for every published listing, and CI enforcing the quality bar.
+
+## Stack
+
+- **Next.js 16** (App Router, Server Actions, Route Handlers, Turbopack) + **React 19**
+- **Supabase** — Postgres, Auth (magic link), and Row-Level Security as the primary
+  authorization control
+- **Tailwind CSS v4** (CSS-first `@theme` tokens — an editorial design system)
+- **Zod v4** for input + row-shape validation
+- **Vitest 4** (unit/integration) + **Playwright** (e2e)
+- **Resend** (reminder email) + **Web Push / VAPID** (deadline notifications)
+- An OpenAI-compatible LLM (Groq free-tier by default) powering the source-watcher
+  and source-discovery pipelines
+
+## Local setup
+
+Prerequisites: Node 22, npm, and the [Supabase CLI](https://supabase.com/docs/guides/cli)
+with Docker (for the local Postgres stack).
 
 ```bash
+# 1. Install dependencies
+npm ci
+
+# 2. Configure environment
+cp .env.example .env.local
+# Fill in the Supabase URL/keys (from `npx supabase status` for a local stack,
+# or your project settings for a hosted one). CRON_SECRET, Resend, VAPID, and
+# the LLM keys are only needed for the features that use them — see the inline
+# comments in .env.example.
+
+# 3. Bring up the local database + apply migrations
+npx supabase start
+npm run db:reset
+
+# 4. Run the app
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality gates
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Four gates run locally and in CI (`.github/workflows/ci.yml`) on every push and PR.
+Run them before you commit:
 
-## Learn More
+```bash
+npm run lint         # eslint
+npm run typecheck    # tsc --noEmit
+npm run test         # vitest (unit + integration)
+npm run build        # next build
+```
 
-To learn more about Next.js, take a look at the following resources:
+Additional checks:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run test:coverage   # vitest with coverage thresholds
+npm run test:e2e        # Playwright smoke suite
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+CI also runs a **gitleaks** secret scan and an **RLS integration** job that boots a
+local Supabase, applies migrations, and asserts every row-level policy allows and
+denies the right rows. See `docs/iskolar-version-control.md` for the commit/push
+checklist CI enforces.
 
-## Deploy on Vercel
+## Documentation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Full product, technical, security, and design specs live in [`docs/`](docs/):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`PRD.md`](docs/PRD.md) — product requirements & MVP plan
+- [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) — technical design
+- [`DATABASE.md`](docs/DATABASE.md) — data models & schema
+- [`SECURITY.md`](docs/SECURITY.md) — security & privacy (RA 10173, RLS, secrets)
+- [`DEPLOYMENT.md`](docs/DEPLOYMENT.md) — hosting & deployment
+- [`iskolar-ux-design.md`](docs/iskolar-ux-design.md) — UI/UX design system
+- [`iskolar-version-control.md`](docs/iskolar-version-control.md) — git workflow & QA gates

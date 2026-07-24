@@ -1,18 +1,14 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { requireSupabasePublicEnv } from "@/lib/env";
 
 // User-scoped client for Server Components/Actions/Route Handlers: uses the
 // anon key + the caller's session cookie, so RLS applies as that user (never
 // the service role). Must be created fresh per request per @supabase/ssr's
 // own guidance -- never shared/cached across requests.
 export async function createSupabaseServerClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set.");
-  }
+  const { NEXT_PUBLIC_SUPABASE_URL: url, NEXT_PUBLIC_SUPABASE_ANON_KEY: anonKey } = requireSupabasePublicEnv();
 
   const cookieStore = await cookies();
 

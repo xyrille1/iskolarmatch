@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 import { isNearingOrPastStaleness } from "@/lib/trust/staleness";
 
 export interface StalenessWorklistItem {
@@ -19,9 +20,10 @@ interface StalenessRow {
 
 // FR12 (docs/PRD.md §4.1): admin-only worklist of published scholarships
 // nearing/past the verified-staleness threshold, most urgent first. Pure
-// read query -- no new table, reuses scholarships.last_verified_at. Only
-// ever called after requireAdmin() gates the caller.
-export async function getStalenessWorklist(): Promise<StalenessWorklistItem[]> {
+// read query -- no new table, reuses scholarships.last_verified_at. `_admin`
+// is required (never read) so "only ever called after requireAdmin() gates
+// the caller" lives in the type system (docs/QA-CHECKLIST.md P2-04).
+export async function getStalenessWorklist(_admin: AdminContext): Promise<StalenessWorklistItem[]> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase

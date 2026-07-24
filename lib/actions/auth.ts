@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/security/rate-limit";
+import { siteUrl } from "@/lib/site-url";
 import { headers } from "next/headers";
 
 const emailSchema = z.object({ email: z.string().email() }).strict();
@@ -33,13 +34,12 @@ export async function requestMagicLink(_prevState: AuthFormState, formData: Form
   }
 
   const next = sanitizeNext(formData.get("next")?.toString());
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
     options: {
-      emailRedirectTo: `${siteUrl}/auth/confirm?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${siteUrl()}/auth/confirm?next=${encodeURIComponent(next)}`,
     },
   });
 

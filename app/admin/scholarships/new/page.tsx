@@ -7,8 +7,8 @@ export const metadata: Metadata = { title: "New scholarship — Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function NewScholarshipPage() {
-  await requireAdmin();
-  const providers = await getProviders();
+  const admin = await requireAdmin();
+  const providers = await getProviders(admin);
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-10">

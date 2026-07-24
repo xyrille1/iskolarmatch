@@ -42,7 +42,7 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
       {item.requirementTotal > 0 && (
         <Link
           href={`/s/${item.slug}#requirements`}
-          className="group mt-6 block focus:outline-none"
+          className="group mt-6 block rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           aria-label={`${item.requirementDone} of ${item.requirementTotal} requirements ready — open checklist`}
         >
           <span className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Requirements</span>
@@ -71,7 +71,7 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
             id={`lead-days-${item.scholarshipId}`}
             name="lead_days"
             defaultValue={item.reminder?.leadDays ?? 7}
-            className="min-h-[44px] rounded-md border border-line px-3 py-2 text-sm focus:border-ink focus:outline-none"
+            className="min-h-[44px] rounded-md border border-line px-3 py-2 text-sm focus:border-ink"
           >
             {LEAD_DAY_OPTIONS.map((d) => (
               <option key={d} value={d}>
@@ -104,6 +104,7 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
           View details
         </PillLink>
         <button
+          type="button"
           disabled={isPending}
           onClick={() => startTransition(() => unsaveScholarship(item.scholarshipId))}
           className="text-sm text-muted underline disabled:opacity-50"

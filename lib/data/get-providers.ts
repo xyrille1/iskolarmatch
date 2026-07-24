@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 
 export interface AdminProvider {
   id: string;
@@ -8,7 +9,10 @@ export interface AdminProvider {
   website: string | null;
 }
 
-export async function getProviders(): Promise<AdminProvider[]> {
+// `_admin` is required (never read) so "only ever called after requireAdmin()
+// gates the caller" lives in the type system, not just a comment
+// (docs/QA-CHECKLIST.md P2-04).
+export async function getProviders(_admin: AdminContext): Promise<AdminProvider[]> {
   const supabase = createSupabaseAdminClient();
   const { data, error } = await supabase.from("providers").select("id, name, type, website").order("name");
 

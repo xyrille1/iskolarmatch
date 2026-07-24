@@ -3,6 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { getAdminScholarships } from "@/lib/data/get-admin-scholarships";
 import { getPendingSuggestionCount } from "@/lib/data/get-suggestion-counts";
+import { getPendingCandidateCount } from "@/lib/data/get-discovery-queue";
 import { markVerified } from "@/lib/actions/admin";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
 
@@ -10,10 +11,11 @@ export const metadata: Metadata = { title: "Admin — IskolarMatch" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  await requireAdmin();
-  const [scholarships, pendingSuggestions] = await Promise.all([
-    getAdminScholarships(),
-    getPendingSuggestionCount(),
+  const admin = await requireAdmin();
+  const [scholarships, pendingSuggestions, pendingDiscoveries] = await Promise.all([
+    getAdminScholarships(admin),
+    getPendingSuggestionCount(admin),
+    getPendingCandidateCount(admin),
   ]);
 
   return (
@@ -27,10 +29,21 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/suggestions" className="underline">
             Source suggestions
             {pendingSuggestions > 0 && (
-              <span className="ml-1 rounded-full bg-amber-100 px-1.5 text-xs font-medium text-amber-800">
+              <span className="ml-1 rounded-full bg-status-soon/15 px-1.5 text-xs font-medium text-status-soon">
                 {pendingSuggestions}
               </span>
             )}
+          </Link>
+          <Link href="/admin/discoveries" className="underline">
+            Discoveries
+            {pendingDiscoveries > 0 && (
+              <span className="ml-1 rounded-full bg-status-soon/15 px-1.5 text-xs font-medium text-status-soon">
+                {pendingDiscoveries}
+              </span>
+            )}
+          </Link>
+          <Link href="/admin/source-pages" className="underline">
+            Source pages
           </Link>
           <Link href="/admin/worklist" className="underline">
             Staleness worklist
@@ -38,7 +51,7 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/providers" className="underline">
             Providers
           </Link>
-          <Link href="/admin/scholarships/new" className="rounded border border-black px-3 py-1.5">
+          <Link href="/admin/scholarships/new" className="rounded border border-ink px-3 py-1.5">
             + New scholarship
           </Link>
         </div>
@@ -46,7 +59,7 @@ export default async function AdminDashboardPage() {
 
       <table className="mt-8 w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-black/20 text-left">
+          <tr className="border-b border-line text-left">
             <th className="py-2">Title</th>
             <th className="py-2">Provider</th>
             <th className="py-2">Published</th>
@@ -56,7 +69,7 @@ export default async function AdminDashboardPage() {
         </thead>
         <tbody>
           {scholarships.map((s) => (
-            <tr key={s.id} className="border-b border-black/10">
+            <tr key={s.id} className="border-b border-line">
               <td className="py-2">{s.title}</td>
               <td className="py-2">{s.providerName}</td>
               <td className="py-2">{s.isPublished ? "Yes" : "Draft"}</td>

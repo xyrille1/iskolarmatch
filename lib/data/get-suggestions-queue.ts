@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 import { confidenceRank } from "@/lib/source-watcher/score-confidence";
 import type { ChangeKind, ConfidenceLevel, TargetTable } from "@/lib/types/source-watcher";
 
@@ -37,7 +38,10 @@ interface SuggestionRow {
   scholarships: { title: string; slug: string } | null;
 }
 
-export async function getPendingSuggestions(): Promise<SuggestionQueueItem[]> {
+// `_admin` is required (never read) so "called only after requireAdmin()
+// gates the caller" lives in the type system, not just a comment
+// (docs/QA-CHECKLIST.md P2-04).
+export async function getPendingSuggestions(_admin: AdminContext): Promise<SuggestionQueueItem[]> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase

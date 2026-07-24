@@ -1,5 +1,6 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 import type { CoverageType } from "@/lib/types/matching";
 import type { ProfileField, Operator } from "@/lib/types/profile";
 
@@ -29,7 +30,13 @@ export interface AdminScholarshipDetail {
   deadlineCycles: { id: string; academic_year: string | null; opens_at: string | null; closes_at: string; status: string }[];
 }
 
-export async function getAdminScholarshipDetail(id: string): Promise<AdminScholarshipDetail | null> {
+// `_admin` is required (never read) so "only ever called after requireAdmin()
+// gates the caller" lives in the type system, not just a comment
+// (docs/QA-CHECKLIST.md P2-04).
+export async function getAdminScholarshipDetail(
+  _admin: AdminContext,
+  id: string
+): Promise<AdminScholarshipDetail | null> {
   const supabase = createSupabaseAdminClient();
 
   const { data, error } = await supabase

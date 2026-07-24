@@ -67,7 +67,10 @@ export function SiteFooter() {
       </div>
 
       <div className="mt-14 flex flex-wrap items-end justify-between gap-6 border-t border-paper-ink/15 pt-8">
-        <p className="text-xs text-muted">© 2026 IskolarMatch · verified data</p>
+        {/* Renders the current year so this never silently goes stale
+            (docs/QA-CHECKLIST.md P2-08) -- unlike the "est. 2026" marginalia on
+            the landing page, which is a real founding-year constant. */}
+        <p className="text-xs text-muted">© {new Date().getFullYear()} IskolarMatch · verified data</p>
         <p className="max-w-[38ch] text-xs text-muted">
           Independent and unofficial. Not affiliated with CHED, DOST-SEI, or UniFAST. Always confirm details on the
           official site before applying.

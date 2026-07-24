@@ -10,6 +10,14 @@ export interface ScoredProposal {
   confidence: ConfidenceResult;
 }
 
+export interface UpsertSuggestionsResult {
+  written: number;
+  // Genuine insert/update failures (anything other than a benign duplicate),
+  // so the caller's run summary can distinguish "nothing new" from "something
+  // broke" (docs/QA-CHECKLIST.md P2-09) instead of swallowing every error.
+  failed: number;
+}
+
 // Writes scored proposals into scholarship_suggestions with the dedupe
 // invariant applied in the app layer: at most one PENDING suggestion per
 // (scholarship, table, row, field). A weekly re-run that re-derives the same
@@ -24,8 +32,9 @@ export async function upsertSuggestions(
   supabase: AdminClient,
   sourceDocumentId: string,
   scored: ScoredProposal[]
-): Promise<number> {
+): Promise<UpsertSuggestionsResult> {
   let written = 0;
+  let failed = 0;
 
   for (const { proposal, confidence } of scored) {
     const rowData = {
@@ -55,12 +64,24 @@ export async function upsertSuggestions(
 
     if (existing?.id) {
       const { error } = await supabase.from("scholarship_suggestions").update(rowData).eq("id", existing.id);
-      if (!error) written += 1;
+      if (error) {
+        console.error(`[source-watcher] Failed to update suggestion ${existing.id}: ${error.message}`);
+        failed += 1;
+      } else {
+        written += 1;
+      }
     } else {
       const { error } = await supabase.from("scholarship_suggestions").insert(rowData);
-      if (!error) written += 1;
+      if (error) {
+        console.error(
+          `[source-watcher] Failed to insert suggestion for ${proposal.scholarshipId}/${proposal.targetField}: ${error.message}`
+        );
+        failed += 1;
+      } else {
+        written += 1;
+      }
     }
   }
 
-  return written;
+  return { written, failed };
 }

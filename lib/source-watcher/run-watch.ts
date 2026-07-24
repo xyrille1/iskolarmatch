@@ -146,8 +146,12 @@ async function processScholarship(supabase: AdminClient, target: WatchTarget): P
     confidence: scoreConfidence(proposal),
   }));
 
-  const written = await upsertSuggestions(supabase, documentId, scored);
-  return { changed: true, suggestionsWritten: written, failure: false };
+  const { written, failed } = await upsertSuggestions(supabase, documentId, scored);
+  // A suggestion write failure is a genuine failure worth surfacing in the run
+  // summary, not silently indistinguishable from "nothing to write"
+  // (docs/QA-CHECKLIST.md P2-09) -- upsertSuggestions already logs the
+  // per-row detail.
+  return { changed: true, suggestionsWritten: written, failure: failed > 0 };
 }
 
 async function insertDocumentWithSections(

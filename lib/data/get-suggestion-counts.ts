@@ -1,11 +1,13 @@
 import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import type { AdminContext } from "@/lib/auth/require-admin";
 
 // Lightweight pending-suggestion counts for curator discoverability (FR10).
-// Head-only count queries (no rows transferred). Called only after
-// requireAdmin() gates the caller.
+// Head-only count queries (no rows transferred). `_admin` is required (never
+// read) so "called only after requireAdmin() gates the caller" lives in the
+// type system, not just a comment (docs/QA-CHECKLIST.md P2-04).
 
-export async function getPendingSuggestionCount(): Promise<number> {
+export async function getPendingSuggestionCount(_admin: AdminContext): Promise<number> {
   const supabase = createSupabaseAdminClient();
   const { count } = await supabase
     .from("scholarship_suggestions")
@@ -14,7 +16,10 @@ export async function getPendingSuggestionCount(): Promise<number> {
   return count ?? 0;
 }
 
-export async function getPendingSuggestionCountForScholarship(scholarshipId: string): Promise<number> {
+export async function getPendingSuggestionCountForScholarship(
+  _admin: AdminContext,
+  scholarshipId: string
+): Promise<number> {
   const supabase = createSupabaseAdminClient();
   const { count } = await supabase
     .from("scholarship_suggestions")

@@ -12,6 +12,31 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['lib/**/*.test.ts', 'tests/**/*.test.ts'],
+    include: ['lib/**/*.test.ts', 'tests/**/*.test.ts', 'app/**/*.test.ts'],
+    coverage: {
+      // Reported via `npm run test:coverage` (docs/QA-CHECKLIST.md P3-05).
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      // Only the tested source layers count toward the number -- exclude tests,
+      // the eval harness (opt-in, real API), pure type/config modules, and the
+      // presentational React tree (exercised by Playwright, not unit tests).
+      include: ['lib/**/*.ts'],
+      exclude: [
+        'lib/**/*.test.ts',
+        'lib/source-watcher/eval/**',
+        'lib/source-watcher/fixtures/**',
+        'lib/types/**',
+        'lib/**/config.ts',
+      ],
+      // A floor, not a target -- set just under the current numbers so a
+      // regression trips CI while leaving headroom to raise as the untested
+      // presentational/IO edges (email, push, supabase factories) get covered.
+      thresholds: {
+        statements: 45,
+        branches: 42,
+        functions: 43,
+        lines: 45,
+      },
+    },
   },
 });

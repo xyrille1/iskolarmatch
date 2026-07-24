@@ -13,7 +13,14 @@ export const metadata: Metadata = { title: "Browse scholarships — IskolarMatch
 // FR17 (docs/PRD.md §4.2): a plain GET <form> so filtering works with zero
 // JS (query-string driven, full navigation) -- consistent with the rest of
 // the app's low-JS reading philosophy (docs/iskolar-ux-design.md §7).
-export const revalidate = 3600;
+//
+// No `revalidate` here: `await searchParams` below makes every request
+// dynamic regardless of what a revalidate value would declare, so a
+// `revalidate = 3600` directive was inert and misleading (confirmed `ƒ
+// Dynamic` in the build output -- docs/QA-CHECKLIST.md P2-01). If hourly
+// ISR caching is wanted later, filtering would need to move client-side/to a
+// cached data layer so the shell can prerender -- deferred as a possible
+// P3-07-style perf pass, not done here.
 
 const PROVIDER_TYPES = ["government", "lgu", "private", "university"] as const;
 const STATUSES = ["open", "closing_soon", "upcoming", "closed"] as const;

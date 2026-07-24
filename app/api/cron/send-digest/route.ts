@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { verifyCronSecret } from "@/lib/security/verify-cron-secret";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { buildScholarshipMatches, type ScholarshipRow } from "@/lib/matching";
+import { buildScholarshipMatches } from "@/lib/matching";
+import { parseScholarshipRows } from "@/lib/matching/scholarship-row-schema";
 import { sendDigestEmail } from "@/lib/email/send-digest-email";
 import type { Profile } from "@/lib/types/profile";
+import { DIGEST_BATCH_SIZE } from "@/lib/cron/config";
+
+// Explicit runtime/duration budget, matching the crawler crons
+// (docs/QA-CHECKLIST.md P1-05) -- this loop makes external calls (Resend,
+// auth.admin.getUserById) per profile, so it needs the same declared ceiling
+// `watch`/`discover` already have instead of an implicit, undeclared one.
+export const runtime = "nodejs";
+export const maxDuration = 60;
 
 interface SavedProfileRow {
   id: string;
@@ -24,9 +33,18 @@ export async function GET(request: Request) {
 
   const supabase = createSupabaseAdminClient();
 
+  // Batched, longest-since-last-digest (or never-digested) first: a profile
+  // past the batch cap simply sorts first on the next run, so a backlog
+  // drains over successive weeks without ever re-sending an already-notified
+  // match (notified_scholarship_ids stays the idempotency guard either way).
   const [{ data: profiles, error: profilesError }, { data: scholarshipRows, error: scholarshipsError }] =
     await Promise.all([
-      supabase.from("saved_profiles").select("id, user_id, profile, notified_scholarship_ids").eq("digest_opt_in", true),
+      supabase
+        .from("saved_profiles")
+        .select("id, user_id, profile, notified_scholarship_ids")
+        .eq("digest_opt_in", true)
+        .order("last_digest_sent_at", { ascending: true, nullsFirst: true })
+        .limit(DIGEST_BATCH_SIZE),
       supabase
         .from("scholarships")
         .select(
@@ -43,7 +61,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Failed to load digest inputs." }, { status: 500 });
   }
 
-  const rows = scholarshipRows as unknown as ScholarshipRow[];
+  const rows = parseScholarshipRows(scholarshipRows, "send-digest");
 
   let sent = 0;
   let skipped = 0;

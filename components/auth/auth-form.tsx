@@ -42,12 +42,14 @@ export function AuthForm({ next }: { next: string }) {
           type="email"
           required
           autoComplete="email"
+          aria-invalid={state.status === "error"}
+          aria-describedby={state.status === "error" ? "email-error" : undefined}
           className="min-h-[44px] rounded-md border border-line px-4 py-2"
         />
       </div>
 
       {state.status === "error" && (
-        <p role="alert" className="text-sm text-status-soon">
+        <p id="email-error" role="alert" className="text-sm text-status-soon">
           {state.error}
         </p>
       )}

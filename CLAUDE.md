@@ -18,9 +18,9 @@ Follow `docs/iskolar-version-control.md` for every git operation in this repo, n
 - Run the pre-push checklist before every push: clean commit sequence, correct branch/remote target, migrations reviewed as a diff if any are involved.
 - Treat destructive or history-rewriting commands (`reset --hard`, `push --force`, `clean -f`, `rebase -i` on pushed commits, branch force-delete) as always requiring a fresh, explicit confirmation in the moment — prior approval of one such command is never standing approval for the next.
 - If a secret ever ends up staged or committed, rotate it first (Supabase/Vercel/Resend), then deal with git history — never the other way around.
-- No code exists yet at this repo stage (specs only). Once the app is scaffolded, add lint/typecheck/test/build to the pre-push gate and update the version-control doc to reflect it — don't let the doc go stale.
+- The app is scaffolded and CI is live: `.github/workflows/ci.yml` runs lint/typecheck/test/build + a gitleaks secret scan + an RLS integration job (booted local Supabase) + a Playwright e2e smoke on every push/PR. Keep it and the version-control doc in sync as the gate evolves — don't let either go stale.
 
 ## Notes
 
-- No CI is configured yet. Until it is, the QA checklist above is manual — run it yourself before committing/pushing rather than assuming a pipeline will catch issues.
+- CI enforces the four gates automatically now, but still run the QA checklist locally before committing/pushing — CI is the backstop, not an excuse to push red.
 - `main` is currently the only branch (solo dev). Feature branches are optional at this size but required for anything schema/migration-related (see the version-control doc §2).

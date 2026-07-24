@@ -11,6 +11,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { getMySavedListShareSlug } from "@/lib/data/get-saved-list-share";
 import { getSavedProfileStatus } from "@/lib/data/get-saved-profile-status";
 import { DigestStatus } from "@/components/saved/digest-status";
+import { siteUrl } from "@/lib/site-url";
 
 export const metadata: Metadata = { title: "Saved — IskolarMatch" };
 // Per-user, session-dependent -- never statically prerenderable.
@@ -31,8 +32,6 @@ export default async function SavedPage() {
     getMySavedListShareSlug(),
     getSavedProfileStatus(),
   ]);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
   return (
     <>
       <SiteHeader />
@@ -52,7 +51,7 @@ export default async function SavedPage() {
 
           {items.length > 0 && (
             <div className="mt-4">
-              <ShareListControls initialSlug={shareSlug} siteUrl={siteUrl} />
+              <ShareListControls initialSlug={shareSlug} siteUrl={siteUrl()} />
             </div>
           )}
 

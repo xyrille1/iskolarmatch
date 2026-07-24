@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { siteUrl } from "@/lib/site-url";
 
 export interface ReminderEmailPayload {
   to: string;
@@ -16,8 +17,7 @@ export async function sendReminderEmail(payload: ReminderEmailPayload): Promise<
   }
 
   const resend = new Resend(apiKey);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const detailUrl = `${siteUrl}/s/${payload.scholarshipSlug}`;
+  const detailUrl = `${siteUrl()}/s/${payload.scholarshipSlug}`;
 
   const { error } = await resend.emails.send({
     from: "IskolarMatch <reminders@iskolarmatch.app>",

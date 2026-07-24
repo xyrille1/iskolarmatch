@@ -32,6 +32,9 @@ export default async function LandingPage() {
 
       <main id="main-content" className="flex-1">
         <section className="relative overflow-hidden px-6 py-20 sm:py-28">
+          {/* "est. 2026" is a real founding-year constant (when IskolarMatch
+              launched), not a copyright year -- intentionally hardcoded, unlike
+              site-footer.tsx's © year (docs/QA-CHECKLIST.md P2-08). */}
           <span
             aria-hidden
             className="marginalia-vertical absolute right-6 top-20 hidden text-[11px] font-medium uppercase tracking-[0.2em] text-muted sm:block"
@@ -83,34 +86,35 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        {featured.length > 0 && (
-          <section className="grain-noir bg-noir px-6 py-16 text-paper-ink">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Featured scholarships</p>
-            <ul className="mt-8 grid gap-x-8 gap-y-10 sm:grid-cols-3">
-              {featured.map((item) => (
-                <li key={item.slug} className="border-t border-paper-ink/15 pt-6">
-                  <p className="text-sm text-paper-ink/70">{item.providerName}</p>
-                  <Link
-                    href={`/s/${item.slug}`}
-                    className="link-trace mt-1 block w-fit font-serif text-2xl font-light leading-tight"
-                  >
-                    {item.title}
-                  </Link>
-                  <div className="mt-3">
-                    <StatusDot status={item.status} closesAt={item.closesAt} opensAt={item.opensAt} tone="inverted" />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        {/* One dark band: the featured gallery (when present) leads into the
+            provenance statement, so the two don't read as duplicate sections. */}
+        <section className="grain-noir bg-noir px-6 py-16 text-paper-ink">
+          {featured.length > 0 && (
+            <div className="mb-16">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Featured scholarships</p>
+              <ul className="mt-8 grid gap-x-8 gap-y-10 sm:grid-cols-3">
+                {featured.map((item) => (
+                  <li key={item.slug} className="border-t border-paper-ink/15 pt-6">
+                    <p className="text-sm text-paper-ink/70">{item.providerName}</p>
+                    <Link
+                      href={`/s/${item.slug}`}
+                      className="link-trace mt-1 block w-fit font-serif text-2xl font-light leading-tight"
+                    >
+                      {item.title}
+                    </Link>
+                    <div className="mt-3">
+                      <StatusDot status={item.status} closesAt={item.closesAt} opensAt={item.opensAt} tone="inverted" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        <section className="bg-noir px-6 py-16 text-paper-ink">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">
-            Every listing links to the official source
-          </p>
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Verified &amp; sourced</p>
           <p className="mt-4 max-w-[46ch] font-serif text-3xl font-light leading-tight">
-            Every listing links to the official source, and shows when it was verified.
+            Every listing links to the provider&apos;s official site — never a third-party form — and shows when we
+            last verified it.
           </p>
         </section>
       </main>

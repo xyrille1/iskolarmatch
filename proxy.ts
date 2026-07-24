@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabasePublicConfigOrWarn } from "@/lib/env";
 
 // Refreshes the Supabase auth session cookie on every request. Required
 // per @supabase/ssr's Next.js guidance -- without this, sessions expire
@@ -8,12 +9,15 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
+  // Missing config degrades to a no-op (session refresh skipped) rather than
+  // failing the request -- Edge Middleware runs on every route, so throwing
+  // here would take down the whole site instead of just auth. The no-op is
+  // now logged (once) instead of silent (docs/QA-CHECKLIST.md P1-03).
+  const config = getSupabasePublicConfigOrWarn();
+  if (!config) {
     return supabaseResponse;
   }
+  const { url, anonKey } = config;
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {

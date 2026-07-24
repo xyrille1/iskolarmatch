@@ -16,7 +16,7 @@ These are filled in so you can build without blocking. Change any that are wrong
 - `[ASSUMPTION]` This is a **portfolio-grade product**, built solo, targeting a working MVP in ~4–6 weeks of part-time work.
 - `[ASSUMPTION]` **Discovery + matching + deadline tracking only.** The app never accepts scholarship applications; it links out to official portals.
 - `[ASSUMPTION]` **Matching is deterministic and rule-based.** No LLM is involved in deciding eligibility.
-- `[ASSUMPTION]` The MVP ships with a **hand-curated seed dataset** (10–20 real scholarships). Automated ingestion is a Phase 2 feature and is human-in-the-loop.
+- `[ASSUMPTION]` The MVP ships with a **hand-curated seed dataset** (10–20 real scholarships). Automated ingestion is a Phase 2 feature and is human-in-the-loop. _(Now built in two stages: FR10 monitors existing records for changes; FR22 (§4.7) discovers brand-new scholarships from official gov.ph/edu.ph index pages. Both file curator suggestions/candidates only — nothing publishes without human approval.)_
 - `[ASSUMPTION]` **Browsing and matching require no account.** An account is only needed to save scholarships and set deadline reminders.
 - `[ASSUMPTION]` Primary users are Filipino senior-high graduates and college students (many are minors, 16–18), on mobile, on slow connections.
 
@@ -76,7 +76,7 @@ The product's core asset is **verified, current scholarship data**, not the matc
 | FR9  | Admin CRUD for providers, scholarships, eligibility rules, requirements, deadline cycles; "mark verified" action stamps `last_verified_at` + curator id.     |
 | FR10 | **(Phase 2 — built)** RAG-grounded agentic source-watcher: a weekly cron fetches each published scholarship's official page, deterministically detects which sections changed, runs a Groq-grounded structured extraction over the changed sections, diffs against the live record, scores each proposed field change, and files per-field **suggestions** for curator approval. Never publishes automatically — approval routes through the existing validated admin actions and stamps `last_verified_at`. Tables: `source_documents`, `source_sections`, `scholarship_suggestions`; queue at `/admin/suggestions`. |
 
-See §4 for the v2 feature backlog (FR11–FR20), scoped separately from the shipped MVP requirements above.
+See §4 for the v2 feature backlog (FR11–FR22), scoped separately from the shipped MVP requirements above.
 
 ## 1.7 Non-Functional Requirements
 
@@ -135,7 +135,7 @@ Graduating senior-high students and 1st–2nd year college students in **one or 
 
 **OUT (deferred):**
 
-- ~~Automated/agentic ingestion (Phase 2, FR10)~~ — now built as a curator-suggestion-only source-watcher (see FR10 above). Still OUT: auto-publish, any student-facing chat/Q&A, and any LLM in the matching path.
+- ~~Automated/agentic ingestion (Phase 2, FR10)~~ — now built as a curator-suggestion-only source-watcher (see FR10 above), plus FR22 (§4.7) discovery of brand-new scholarships from official index pages. Still OUT: **auto-publish** (both stages route through curator approval), scraping off-allowlist/non-official sites (blogs, `.com` listicles), republishing third-party prose, any student-facing chat/Q&A, and any LLM in the matching path.
 - Nationwide coverage
 - Accounts required for browsing
 - SMS/push notifications
@@ -199,7 +199,7 @@ A pilot cohort (even 20–30 real students) completes profile → saves ≥1 rel
 
 The MVP (FR1–FR9) proved the core loop works: verified matching + deadline tracking beats a spreadsheet. This backlog is not a random feature wishlist — every item is chosen to deepen the product's actual differentiator (**verified, current data** — see the Appendix rationale below) or to add real matching depth and return-visit value, without violating the non-goals in §1.3 or the data-minimization posture in `SECURITY.md` (SEC-G1). Three directions were prioritized for this round: **trust & data-freshness**, **matching depth & UX**, and **engagement & retention**. A fourth direction — reach & inclusion (i18n/Tagalog UI, deeper LGU/barangay coverage, admin bulk-import) — was considered and deliberately deferred; see §1.9.
 
-**FR11–FR21 are all built** — see `ARCHITECTURE.md` §3–4 for the routes/actions, `DATABASE.md` §2 for the schema (migrations `20260101000007`–`20260101000011`, plus `20260101000013` for FR21), and `SECURITY.md` §3.9 for the new anon-write (FR13) and SEC-G1-exception (FR20) controls. The suggested phasing in §4.4 was followed in build order; every "must," "never," and security note below was honored as written, not loosened during implementation. FR21 (the application tracker) was added after the FR11–FR20 round as the natural next post-save engagement step; see §4.6.
+**FR11–FR22 are all built** — see `ARCHITECTURE.md` §3–4 for the routes/actions, `DATABASE.md` §2 for the schema (migrations `20260101000007`–`20260101000011`, `20260101000013` for FR21, and `20260101000014` for FR22), and `SECURITY.md` §3.9 for the new anon-write (FR13), SEC-G1-exception (FR20), and discovery-crawler (FR22) controls. The suggested phasing in §4.4 was followed in build order; every "must," "never," and security note below was honored as written, not loosened during implementation. FR21 (the application tracker) was added after the FR11–FR20 round as the natural next post-save engagement step (§4.6); FR22 (automated discovery) followed as the "keep the data current on its own" step (§4.7).
 
 ## 4.1 Trust & Data Freshness
 
@@ -241,7 +241,7 @@ Mirrors the §3.1 phase-table style; risk-ordered rather than theme-ordered, sin
 
 ## 4.5 Reaffirmed Non-Goals
 
-Nothing in this backlog introduces application/document submission, payments, or AI-generated eligibility decisions — FR14's guidance text is curator-authored, not model-generated. No feature defaults anonymous users into a persisted profile: FR20 is opt-in, signed-in-only, and the sole exception to the zero-persisted-profile posture, called out as such rather than slipped in silently. FR21 (§4.6) persists per-scholarship *tracking* state, not the matching profile, so it does **not** touch that posture.
+Nothing in this backlog introduces application/document submission, payments, or AI-generated eligibility decisions — FR14's guidance text is curator-authored, not model-generated. No feature defaults anonymous users into a persisted profile: FR20 is opt-in, signed-in-only, and the sole exception to the zero-persisted-profile posture, called out as such rather than slipped in silently. FR21 (§4.6) persists per-scholarship *tracking* state, not the matching profile, so it does **not** touch that posture. FR22 (§4.7) uses an LLM only to **extract** draft facts from public official pages for curator review — never to decide eligibility or to publish; and it fetches only allowlisted gov.ph/edu.ph sources, so it introduces no scraping of third-party/copyrighted content.
 
 ## 4.6 Application Tracker (FR21)
 
@@ -255,6 +255,16 @@ The MVP explicitly frames itself as the replacement for a student's personal tra
 - **Progress bar** (`done/total` requirements) on each saved-list row, linking to the detail checklist.
 
 **Alignment / boundaries honored:** deterministic and LLM-free; owner-scoped RLS via `auth.uid()` mirroring `reminders`/`saved_scholarships`; server actions take `user_id` from the session, never a request param (`SECURITY.md` §3.4); **authenticated-owner write, not anon-write** (contrast FR13); `GRANT`s shipped in the same migration (`DATABASE.md` §5). It does **not** persist the matching profile (that remains FR20's opt-in-only exception), add application/document submission (§1.3 non-goal), or expand the FR19 share payload. Tables: `application_progress`, `requirement_checkoffs` (migration `20260101000013`); actions in `lib/actions/application-tracker.ts`.
+
+## 4.7 Automated Discovery (FR22)
+
+Where FR10's source-watcher keeps *existing* scholarships current (it re-fetches the official page of a record we already hold and proposes field corrections), it can never grow the catalogue — it only iterates published rows. FR22 closes that gap: it **discovers brand-new scholarships** the curator hasn't entered yet, so the catalogue stays current on its own as institutions post new programs. This is the direct answer to "make scholarships dynamic — when a new one is posted, it should show up here."
+
+| ID   | Requirement |
+| ---- | ----------- |
+| FR22 | **Automated new-scholarship discovery (source-crawler).** A weekly cron (`/api/cron/discover-sources`, Node runtime, `CRON_SECRET`-gated) crawls a **curator-registered** set of official **gov.ph/edu.ph** scholarship *index* pages (`/admin/source-pages`). Per index page: robots.txt-respecting SSRF-guarded fetch → deterministic anchor extraction (Readability drops `href`s, so the raw DOM is parsed) → change-gate on the link set → an LLM **selects** which anchors are scholarship detail links (choosing only from the anchors we supply, so it can't invent a URL) → per *new* detail page (deduped against existing `official_url`s and pending candidates): fetch → normalize → LLM **extracts** a draft record (coverage/benefit/deadline + plain-text eligibility & requirement hints) → files a **candidate** into `/admin/discoveries`, worst-confidence-first. A curator reviews the draft and **promotes** it into a *draft* scholarship via the same validated `upsertScholarship` action they use by hand (Zod + URL allowlist + publish guard + audit), then adds rules/requirements/deadline and publishes — or rejects it. **Never auto-publishes.** New tables `source_index_pages`, `scholarship_candidates` (RLS default-deny, service-role only; migration `20260101000014`). Reuses the `lib/source-watcher` fetch/normalize/LLM rails; new pipeline in `lib/source-discovery/`. |
+
+**Legal-by-design (the standing constraint).** Discovery only ever fetches **allowlisted gov.ph/edu.ph** hosts — the same three-layer allowlist as SEC-G3 (`isAllowlistedUrl()` + the DB trigger in migration `...014` for both `index_url` and `detail_url`). It is a **good-citizen crawler**: honors `robots.txt`, sends a self-identifying User-Agent with a contact URL, and applies a per-domain crawl delay (raised by any `Crawl-delay` directive). It stores **facts + a link to the official source**, never a third party's prose — and because a curator reviews and authors the final record, no copyrighted description is republished. Off-allowlist blogs/listicles (e.g. `.com.ph` articles) are **leads only**: a human reads them and re-sources the scholarship to its official gov/edu page. The LLM is used strictly for **extraction/classification of public pages**, never for eligibility or publish decisions (§1.3, Appendix). `up.phinma.edu.ph` is on `.edu.ph` and is the reference source in the eval/QA.
 
 ---
 
