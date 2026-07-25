@@ -30,7 +30,7 @@ jobs:
     name: lint · typecheck · test · build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -68,7 +68,7 @@ jobs:
     name: secret scan (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Full history so the scan covers every commit on the PR/branch,
           # not just the tip.
@@ -94,7 +94,7 @@ jobs:
     name: RLS integration (local Supabase)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -133,7 +133,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
       NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
