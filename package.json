@@ -13,7 +13,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "eval:source-watcher": "tsx --conditions=react-server lib/source-watcher/eval/run-eval.ts",
-    "db:reset": "supabase db reset"
+    "db:reset": "supabase db reset",
+    "grant-admin": "tsx --conditions=react-server scripts/grant-admin.ts"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
