@@ -57,6 +57,15 @@ textarea:focus-visible {
   outline-offset: 1px;
 }
 
+/* Native checkboxes/radios otherwise render in the browser's default accent
+   (blue in Chromium/Firefox), the one place a stray color was leaking into an
+   intentionally monochrome ink/paper system (match form, requirement
+   checklist, digest opt-in). */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--ink);
+}
+
 /* Editorial print texture for full-bleed black sections -- pure CSS, zero
    image bytes. Kept faint enough to read as "paper grain," not noise. */
 .grain-noir {

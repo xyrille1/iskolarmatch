@@ -46,7 +46,7 @@ export function MatchForm({ onSuccess }: { onSuccess: (state: MatchFormState) =>
       </div>
 
       {state.status === "error" && state.formError && (
-        <p role="alert" className="text-sm text-status-soon">
+        <p role="alert" className="text-sm text-status-danger">
           {state.formError}
         </p>
       )}
@@ -83,7 +83,7 @@ export function MatchForm({ onSuccess }: { onSuccess: (state: MatchFormState) =>
           Used only to check GWA-based requirements.
         </p>
         {state.status === "error" && state.fieldErrors?.gwa && (
-          <p id="gwa-error" role="alert" className="text-sm text-status-soon">
+          <p id="gwa-error" role="alert" className="text-sm text-status-danger">
             {state.fieldErrors.gwa}
           </p>
         )}
