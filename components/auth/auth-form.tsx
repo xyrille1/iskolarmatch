@@ -49,7 +49,7 @@ export function AuthForm({ next }: { next: string }) {
       </div>
 
       {state.status === "error" && (
-        <p id="email-error" role="alert" className="text-sm text-status-soon">
+        <p id="email-error" role="alert" className="text-sm text-status-danger">
           {state.error}
         </p>
       )}

@@ -71,7 +71,7 @@ export function ReportIssueForm({ scholarshipId }: { scholarshipId: string }) {
       </div>
 
       {state.status === "error" && (
-        <p role="alert" className="text-status-soon">
+        <p role="alert" className="text-status-danger">
           {state.formError}
         </p>
       )}

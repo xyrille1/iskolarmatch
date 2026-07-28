@@ -45,7 +45,7 @@ export function DigestOptIn({ profile }: { profile: Profile }) {
         {isPending ? "Saving…" : "Email me when new scholarships match this profile"}
       </PillButton>
       {error && (
-        <p role="alert" className="text-sm text-status-soon">
+        <p role="alert" className="text-sm text-status-danger">
           {error}
         </p>
       )}

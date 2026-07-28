@@ -23,7 +23,7 @@ export function SavedItem({ item }: { item: SavedScholarshipItem }) {
       {/* Header */}
       <p className="text-sm text-muted">{item.providerName}</p>
       <h3 className="font-serif text-2xl font-light leading-tight sm:text-3xl">
-        <Link href={`/s/${item.slug}`} className="hover:underline">
+        <Link href={`/s/${item.slug}`} className="link-trace">
           {item.title}
         </Link>
       </h3>
