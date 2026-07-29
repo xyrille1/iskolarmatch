@@ -100,6 +100,8 @@ Migrations live in `supabase/migrations/`, applied in filename order (`202601010
 
 Both are easy to miss because the failure mode is silent (no error, no 500 — just a link that quietly goes to the wrong place), and neither shows up in `npm run build`/`test`/typecheck. Confirm both are set, then smoke-test one real magic-link sign-in against the deployed URL before calling auth done.
 
+3. **Keep-alive ping target (P0-04, asset A5).** `.github/workflows/keep-alive.yml` pings `/api/health` (a real, minimal Supabase read — `app/api/health/route.ts`) every 3 days so the free-tier Supabase project's 7-day inactivity auto-pause never triggers. The workflow reads its target from the **`PRODUCTION_URL` GitHub Actions repository variable** (Settings → Secrets and variables → Actions → Variables tab, not Secrets — it's not sensitive) — until that's set, the workflow no-ops (green, not red) rather than failing on every scheduled run. **Set `PRODUCTION_URL` to the real deployed origin (e.g. `https://<domain>`) once the app is live** to turn the mitigation on.
+
 ## 7. Known Gaps
 
 - **No separate staging environment** with its own Supabase project — preview deployments exist but DB-backed routes in them would hit whatever Supabase project is configured, which needs care.

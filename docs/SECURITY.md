@@ -104,6 +104,9 @@ The discovery crawler (`lib/source-discovery/`) fetches multiple pages per regis
 ### 3.12 CI-enforced QA gate
 `.github/workflows/ci.yml` runs on every push/PR: `lint`/`typecheck`/`test`/`build`, a `gitleaks --redact` secret scan, the RLS integration suite (`tests/integration/rls.test.ts`) against a booted local Supabase stack (no longer self-skipping), and a Playwright e2e smoke. A red gate blocks the PR. This is the automated backstop behind the manual pre-push checklist (`docs/iskolar-version-control.md` §7), not a replacement for it.
 
+### 3.13 Cron failure alerting (P0-03) and availability keep-alive (P0-04)
+Every cron handler's hard-failure path (`app/api/cron/*/route.ts`) calls `notifyCronFailure()` (`lib/observability/notify-cron-failure.ts`), which emails `CRON_ALERT_EMAIL` via Resend — best-effort and never throws, so a broken alert channel can't mask the original failure; it falls back to `console.error` (the pre-existing signal) if `CRON_ALERT_EMAIL`/`RESEND_API_KEY` aren't set. Separately, `.github/workflows/keep-alive.yml` pings the public, unauthenticated `/api/health` route (a minimal anon-scoped `scholarships` read, `app/api/health/route.ts`) every 3 days so the free-tier Supabase project's inactivity auto-pause (asset A5) never triggers — see `DEPLOYMENT.md` §6 for the one-time `PRODUCTION_URL` setup step this depends on.
+
 ## 4. Known Gaps / Accepted Risks
 
 Documented honestly rather than glossed over — revisit if the app's risk profile changes (more traffic, more admins, real user data at scale):
@@ -116,6 +119,7 @@ Documented honestly rather than glossed over — revisit if the app's risk profi
 - **`updated_at` on `scholarships` is not auto-refreshed** by a trigger — stale-timestamp risk if application code ever forgets to set it explicitly on an update path (`DATABASE.md` §7).
 - **`scholarship_reports` rate limit (5/60s/IP, §3.3) is the same in-memory, per-instance limiter** as the rest of the app (§4 above) — the first anon-write path inherits that limiter's known scaling gap rather than getting a stronger one.
 - **Web Push has no delivery-retry queue** — a failed push for a given reminder cycle is simply dropped (email remains the primary, also-not-retried channel); only an *expired* subscription is pruned. Acceptable since push is explicitly "alternative/addition to," not a replacement for, email (`PRD.md` §4.3 FR18).
+- **A5 (free-tier auto-pause) mitigation is built but not yet activated.** `.github/workflows/keep-alive.yml` (§3.13) exists and no-ops safely until the `PRODUCTION_URL` repository variable is set to the real deployed origin (`DEPLOYMENT.md` §6) — until that one-time step is done, this is a deliberately **accepted risk**: acceptable for a portfolio project at current (near-zero) traffic, where a paused project is a self-inflicted, easily-noticed, easily-reversed (one dashboard click to unpause) outage rather than data loss. Revisit before any real-traffic launch.
 
 ## 5. Security Test Checklist
 
