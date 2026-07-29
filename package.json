@@ -19,10 +19,10 @@
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
     "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.7",
-    "jsdom": "^27.0.0",
-    "next": "16.2.10",
-    "pdf-parse": "^1.1.1",
+    "@supabase/supabase-js": "^2.110.9",
+    "jsdom": "^30.0.0",
+    "next": "16.2.12",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "resend": "^6.17.2",
@@ -31,7 +31,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.61.1",
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4",
     "@types/jsdom": "^28.0.3",
     "@types/node": "26.1.1",
@@ -40,7 +40,7 @@
     "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "4.1.10",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.11",
     "supabase": "^2.109.1",
     "tailwindcss": "^4",
     "typescript": "6.0.3",
