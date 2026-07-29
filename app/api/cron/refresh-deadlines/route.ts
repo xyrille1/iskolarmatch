@@ -4,6 +4,9 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { computeDeadlineStatus } from "@/lib/deadline/compute-status";
 import { getManilaTodayIso } from "@/lib/deadline/manila-date";
 import type { DeadlineStatus } from "@/lib/deadline/format-status";
+import { notifyCronFailure } from "@/lib/observability/notify-cron-failure";
+
+const CRON_NAME = "refresh-deadlines";
 
 // FR5: deadline status auto-computed, refreshed daily. Runs as a Vercel Cron
 // -> Route Handler hitting this endpoint (see vercel.json), authenticated via
@@ -22,6 +25,7 @@ export async function GET(request: Request) {
     .select("id, opens_at, closes_at, status");
 
   if (error) {
+    await notifyCronFailure({ cron: CRON_NAME, reason: "Failed to load deadline cycles." });
     return NextResponse.json({ error: "Failed to load deadline cycles." }, { status: 500 });
   }
 
@@ -39,6 +43,7 @@ export async function GET(request: Request) {
       .update({ status: update.nextStatus })
       .eq("id", update.id);
     if (updateError) {
+      await notifyCronFailure({ cron: CRON_NAME, reason: `Failed to update deadline cycle ${update.id}.` });
       return NextResponse.json({ error: "Failed to update a deadline cycle." }, { status: 500 });
     }
   }

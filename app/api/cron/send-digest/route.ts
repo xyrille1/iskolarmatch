@@ -6,6 +6,9 @@ import { parseScholarshipRows } from "@/lib/matching/scholarship-row-schema";
 import { sendDigestEmail } from "@/lib/email/send-digest-email";
 import type { Profile } from "@/lib/types/profile";
 import { DIGEST_BATCH_SIZE } from "@/lib/cron/config";
+import { notifyCronFailure } from "@/lib/observability/notify-cron-failure";
+
+const CRON_NAME = "send-digest";
 
 // Explicit runtime/duration budget, matching the crawler crons
 // (docs/QA-CHECKLIST.md P1-05) -- this loop makes external calls (Resend,
@@ -58,6 +61,7 @@ export async function GET(request: Request) {
     ]);
 
   if (profilesError || scholarshipsError || !scholarshipRows) {
+    await notifyCronFailure({ cron: CRON_NAME, reason: "Failed to load digest inputs." });
     return NextResponse.json({ error: "Failed to load digest inputs." }, { status: 500 });
   }
 

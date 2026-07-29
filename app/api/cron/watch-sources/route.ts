@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { verifyCronSecret } from "@/lib/security/verify-cron-secret";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { runSourceWatcher } from "@/lib/source-watcher/run-watch";
+import { notifyCronFailure } from "@/lib/observability/notify-cron-failure";
+
+const CRON_NAME = "watch-sources";
 
 // FR10 (docs/PRD.md §1.6, Phase 2): the source-watcher cron. Thin gate over the
 // agentic loop in lib/source-watcher/run-watch.ts -- same shape as the other
@@ -25,6 +28,7 @@ export async function GET(request: Request) {
     return NextResponse.json(summary);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Source-watcher run failed.";
+    await notifyCronFailure({ cron: CRON_NAME, reason: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

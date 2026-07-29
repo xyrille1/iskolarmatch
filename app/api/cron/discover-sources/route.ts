@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { verifyCronSecret } from "@/lib/security/verify-cron-secret";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { runSourceDiscovery } from "@/lib/source-discovery/run-discovery";
+import { notifyCronFailure } from "@/lib/observability/notify-cron-failure";
+
+const CRON_NAME = "discover-sources";
 
 // FR22 (docs/PRD.md §4.7): the new-scholarship discovery cron. Thin gate over
 // the crawler loop in lib/source-discovery/run-discovery.ts -- same shape as the
@@ -26,6 +29,7 @@ export async function GET(request: Request) {
     return NextResponse.json(summary);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Discovery run failed.";
+    await notifyCronFailure({ cron: CRON_NAME, reason: message });
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
