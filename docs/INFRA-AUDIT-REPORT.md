@@ -20,8 +20,8 @@ than editing old findings in place._
 | **Layers DRIFT** | 4 / 13 (1, 5, 7, 13) — docs stale vs. actual repo contents |
 | **Layers GAP** | 3 / 13 (6*, 11, 12, 13) |
 | **Layers UNKNOWN** | 3 / 13 (3*, 5, 13) — need a live check, not more repo-reading |
-| **Fixed since this run** | Nothing yet — this report documents the findings, checklist items below are still open |
-| **Next action** | Work the checklist top-down (P0 first); P0-01 and P0-04 are pure doc edits doable without live access |
+| **Fixed since this run** | 2026-07-30: P0-01, P0-03, P0-04, P1-01, P1-02, P1-03 all closed (see Checklist below) — every doc/code item that didn't require a live dashboard or a running Docker daemon is done. `lint`/`typecheck`/`test`/`build` all green after the changes (267 tests passing, up from 264). |
+| **Next action** | Only live-check items remain: P0-02 (magic-link smoke test), P2-01/P2-02 (dashboard confirmations), P2-03 (db reset timing — blocked locally, Docker Desktop is manually paused), P2-04 (needs real usage data that doesn't exist yet). None of these are closable by editing code. |
 
 _\* Layers 3, 6, and 13 carry more than one status because a layer can be mostly OK with one open
 sub-item — see the full table for the split._
@@ -30,7 +30,9 @@ sub-item — see the full table for the split._
 - Live magic-link smoke test against the deployed URL (P0-02)
 - Vercel dashboard plan-tier check against the 5-cron ceiling (P2-01)
 - GitHub Actions dashboard — confirm the `rls` job's latest run is green (P2-02)
-- An actual timed `supabase db reset` + reseed drill (P2-03)
+- An actual timed `supabase db reset` + reseed drill (P2-03) — attempted 2026-07-30, blocked: local Docker Desktop is manually paused (not "not installed" — resuming it wasn't this agent's call to make unprompted)
+- Setting the `PRODUCTION_URL` GitHub Actions repository variable so the new P0-04 keep-alive workflow actually activates (`DEPLOYMENT.md` §6) — the workflow ships safe-by-default (no-ops until set) precisely because this needs a human who knows the real deployed origin
+- Re-deriving cron batch sizes once real per-item latency is known (P2-04) — needs production usage data that doesn't exist pre-launch
 
 ---
 
@@ -74,10 +76,11 @@ security/trust boundary. Items marked **(live check)** need a human at a dashboa
 ### P0 — Highest leverage / highest risk
 
 #### [P0-01] Fix the "No CI configured" doc drift 🔒 · Effort S
-- [ ] **Where:** `docs/DEPLOYMENT.md` §4/§7, `docs/SECURITY.md` §4.
+- [x] **Where:** `docs/DEPLOYMENT.md` §4/§7, `docs/SECURITY.md` §4.
 - **Problem:** Both docs still assert "No CI is configured" / "No CI enforces the QA checklist." `.github/workflows/ci.yml` has existed and been live since at least `15a8186` (see `QA-CHECKLIST.md` P0-01). `iskolar-version-control.md` and `CLAUDE.md` already say CI is live — these two docs are the odd ones out.
 - **Fix:** Rewrite the stale sections to describe the actual 4-job pipeline (`gates`, `secret-scan`, `rls`, `e2e`).
 - **Done when:** No doc in `docs/` contradicts another on CI's existence.
+- **Resolved** (2026-07-30, uncommitted): rewrote `DEPLOYMENT.md` §4/§7 and `SECURITY.md` §4 to describe the real 4-job pipeline. Also found and fixed the same stale claim beyond the two named docs — `ARCHITECTURE.md` §10 ("No CI"), and two self-contradicting lines inside `iskolar-version-control.md` itself (§5's "no CI exists yet" and §9's "once CI exists," both contradicting that doc's own already-accurate §0) — the "no doc contradicts another" done-when criterion required going beyond the two files named in Problem.
 
 #### [P0-02] Live magic-link smoke test 🔒 · Effort S (live check)
 - [ ] **Where:** Supabase Dashboard (Auth → Email Templates, Auth → URL Configuration) + deployed production URL.
@@ -86,38 +89,43 @@ security/trust boundary. Items marked **(live check)** need a human at a dashboa
 - **Done when:** A real magic-link sign-in has been observed to work end-to-end in production, once — document the date it was last confirmed here.
 
 #### [P0-03] Silent cron failures have no alerting 🔒 · Effort M
-- [ ] **Where:** `app/api/cron/{refresh-deadlines,send-reminders,send-digest,watch-sources,discover-sources}/route.ts`.
+- [x] **Where:** `app/api/cron/{refresh-deadlines,send-reminders,send-digest,watch-sources,discover-sources}/route.ts`.
 - **Problem:** Every failure path returns a bare `NextResponse.json({error}, {status:500})`. No SDK, webhook, or email fires. A cron that fails every day is invisible without manually opening the Vercel dashboard.
 - **Fix:** Add a minimal error-tracking SDK (e.g. Sentry free tier) or an on-failure notification (email/webhook) from each cron handler's catch block.
 - **Done when:** A forced failure in any cron handler produces an observable signal outside the Vercel dashboard.
+- **Resolved** (2026-07-30, uncommitted): added `lib/observability/notify-cron-failure.ts` — a single best-effort, never-throwing alert function (email via Resend to `CRON_ALERT_EMAIL`, falls back to `console.error` if unconfigured) — and wired it into every hard-failure branch across all 5 cron handlers. New `CRON_ALERT_EMAIL` var documented in `.env.example`/`DEPLOYMENT.md` §2. Covered by `lib/observability/notify-cron-failure.test.ts` (4 cases) and 5 new forced-failure cases in `app/api/cron/cron-routes.test.ts` proving the alert actually fires per route. All 267 tests green.
 
 #### [P0-04] Supabase free-tier auto-pause has no mitigation or acceptance 🔒 · Effort S–M
-- [ ] **Where:** `docs/SECURITY.md` §2 (asset A5), `docs/DEPLOYMENT.md`.
+- [x] **Where:** `docs/SECURITY.md` §2 (asset A5), `docs/DEPLOYMENT.md`.
 - **Problem:** Free-tier Supabase projects auto-pause on inactivity, which would silently take the whole app down. The risk is named in the asset table but never dispositioned — no keep-alive ping exists, and no doc says "accepted risk, here's why."
 - **Fix:** Either add a lightweight keep-alive cron (careful: don't just add a 6th Vercel cron without re-checking P2-01's plan ceiling), or write an explicit accepted-risk note with rationale (e.g. "acceptable for a portfolio project, revisit before real traffic").
 - **Done when:** A5 has either a working mitigation or a documented, deliberate acceptance — not silence.
+- **Resolved** (2026-07-30, uncommitted): did both, deliberately, given P2-01 (the Vercel cron ceiling) is itself still unconfirmed. Added `app/api/health` (public, anon-scoped, minimal `scholarships` read — real DB activity) and `.github/workflows/keep-alive.yml`, a **GitHub Actions** cron (not a 6th Vercel cron, sidesteps P2-01 entirely) pinging it every 3 days. The workflow reads its target from the `PRODUCTION_URL` repo variable and no-ops safely (green, not red) until that's set — so until the one live step is done, `SECURITY.md` §4 also carries an explicit accepted-risk note (rationale: portfolio-scale traffic, an auto-paused project is a self-inflicted, easily-reversed outage, not data loss). See `DEPLOYMENT.md` §6 item 3 and `SECURITY.md` §3.13.
 
 ---
 
 ### P1 — Doc drift (safe, no live access needed)
 
 #### [P1-01] Fix ARCHITECTURE.md's client-side GWA validation claim · Effort S
-- [ ] **Where:** `docs/ARCHITECTURE.md` §9.
+- [x] **Where:** `docs/ARCHITECTURE.md` §9.
 - **Problem:** Claims client-side GWA range validation exists; `components/match/match-form.tsx` has no such validation. It's server-only, round-trip (`lib/actions/match-profile.ts:70-71`), and `tests/e2e/smoke.spec.ts:35-40` actually exercises the server-side path.
 - **Fix:** Correct the wording to describe the real (server-side) validation path.
 - **Done when:** §9 accurately describes what the e2e suite exercises.
+- **Resolved** (2026-07-30, uncommitted): §9 now states GWA validation is server-only via `profileSchema` and describes what `smoke.spec.ts:35-40` actually exercises (the server round-trip). While in the same section, also fixed "the four cron route handlers" → five (route-count drift I found alongside this, not in the original Problem statement) and §1's overview, which separately claimed "FR10 is Phase 2 and not built" and "three Vercel Cron... Route Handlers" — both false (FR10 is built, described in full in §10; there are five cron handlers, not three) — left uncorrected this would have re-surfaced as a new DRIFT finding on the next audit run.
 
 #### [P1-02] Add missing routes to the ARCHITECTURE.md §3 route table · Effort S
-- [ ] **Where:** `docs/ARCHITECTURE.md` §3.
+- [x] **Where:** `docs/ARCHITECTURE.md` §3.
 - **Problem:** `/contact`, `/faq`, `/terms` exist as static pages but aren't listed.
 - **Fix:** Add the three rows (all static, no revalidate).
 - **Done when:** Every route under `app/` has a corresponding table entry.
+- **Resolved** (2026-07-30, uncommitted): added the three rows (confirmed static — no `revalidate`/`dynamic` export in any of the three `page.tsx` files). Also added `watch-sources`/`discover-sources` to the Cron Route Handlers table (present in the repo, missing from the doc — same class of drift as the named problem) and a new "Other Route Handlers" table for `/api/health` (added by P0-04).
 
 #### [P1-03] Fix DEPLOYMENT.md §5's stale migration count · Effort S
-- [ ] **Where:** `docs/DEPLOYMENT.md` §5.
+- [x] **Where:** `docs/DEPLOYMENT.md` §5.
 - **Problem:** Describes migrations ending at `...012`; repo actually has 14 files through `20260101000014_source_discovery.sql`.
 - **Fix:** Update the range/description to the current migration set.
 - **Done when:** §5 matches `supabase/migrations/` exactly.
+- **Resolved** (2026-07-30, uncommitted): §5 now lists the full `...001`–`...014` range with a one-line purpose per migration from `...007` onward, each verified against the actual `create table`/`alter table` statements in that file.
 
 ---
 
@@ -140,6 +148,7 @@ security/trust boundary. Items marked **(live check)** need a human at a dashboa
 - **Problem:** SEC-G5's "<30 min rebuild from migrations+seed" is an assertion about migration structure, not a measured result. No evidence in git history of it ever being timed.
 - **Fix:** Run `npm run db:reset`, time it, record the result.
 - **Done when:** A real timing exists and either confirms or revises the <30 min claim; record the date and duration here.
+- **Attempted, not resolved** (2026-07-30): Docker Desktop is installed but was found in a manually-paused state (`docker desktop status` → `stopping`, `docker version` → "Docker Desktop is manually paused"). Not touched — resuming it wasn't this agent's call to make without asking, since the user paused it deliberately for reasons outside this task's visibility. Still needs a human to unpause Docker and run `npm run db:reset` with a stopwatch.
 
 #### [P2-04] Re-derive cron batch sizes as the catalogue grows · Effort M (needs real usage data)
 - [ ] **Where:** `lib/source-watcher/config.ts` (`WATCH_BATCH_SIZE`), `lib/source-discovery/config.ts` (`DISCOVER_INDEX_BATCH_SIZE`, `DISCOVER_MAX_DETAIL_PAGES_PER_RUN`).

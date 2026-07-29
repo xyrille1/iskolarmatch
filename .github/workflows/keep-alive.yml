@@ -1,0 +1,34 @@
+name: Keep-alive
+
+# P0-04 (docs/INFRA-AUDIT-REPORT.md): Supabase free-tier projects auto-pause
+# after 7 days with no activity, which would silently take the whole app
+# down (asset A5, docs/SECURITY.md §2). This pings the deployed /api/health
+# route every 3 days -- well under that threshold -- which runs a real
+# Supabase query (app/api/health/route.ts), so it counts as activity.
+#
+# Opt-in via the `PRODUCTION_URL` repository variable (Settings -> Secrets
+# and variables -> Actions -> Variables) so this workflow does nothing (and
+# doesn't fail red every 3 days) until the actual deployed URL is known --
+# see docs/DEPLOYMENT.md §6 for the one-time setup step.
+on:
+  schedule:
+    - cron: "0 3 */3 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    name: ping /api/health
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping the deployed health endpoint
+        run: |
+          if [ -z "${{ vars.PRODUCTION_URL }}" ]; then
+            echo "PRODUCTION_URL repository variable is not set -- skipping (see docs/DEPLOYMENT.md §6)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          url="${{ vars.PRODUCTION_URL }}/api/health"
+          echo "Pinging $url" >> "$GITHUB_STEP_SUMMARY"
+          curl --fail --silent --show-error "$url"

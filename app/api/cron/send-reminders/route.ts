@@ -5,6 +5,9 @@ import { getManilaTodayIso } from "@/lib/deadline/manila-date";
 import { sendReminderEmail } from "@/lib/email/send-reminder-email";
 import { sendPushNotification, PushSubscriptionExpiredError } from "@/lib/push/send-push-notification";
 import { REMINDER_BATCH_SIZE } from "@/lib/cron/config";
+import { notifyCronFailure } from "@/lib/observability/notify-cron-failure";
+
+const CRON_NAME = "send-reminders";
 
 // Explicit runtime/duration budget, matching the crawler crons
 // (docs/QA-CHECKLIST.md P1-05) -- this loop makes external calls (Resend, Web
@@ -49,6 +52,7 @@ export async function GET(request: Request) {
     .limit(REMINDER_BATCH_SIZE);
 
   if (error) {
+    await notifyCronFailure({ cron: CRON_NAME, reason: "Failed to load due reminders." });
     return NextResponse.json({ error: "Failed to load due reminders." }, { status: 500 });
   }
 

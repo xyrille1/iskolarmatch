@@ -10,7 +10,7 @@ _System architecture, matching engine, deadline job, and route/action map for th
 
 ## 1. Overview
 
-A read-heavy Next.js app over a Supabase Postgres database, implementing `PRD.md` §1.6 (FR1–FR9; FR10 is Phase 2 and not built) and §4's v2 feature backlog (FR11–FR20, all built). The differentiating logic is a **deterministic matching engine** (`lib/matching/`) implemented as pure TypeScript functions — no I/O, no LLM, fully unit-tested; FR14's near-miss guidance is curator-authored copy, not model-generated, so this stays true post-v2. Scholarship data is human-curated through an admin tool; deadline status, reminder emails/push, and the opt-in digest are recomputed by three **Vercel Cron**-triggered Route Handlers (not Supabase Edge Functions, see §6). There is no external service on the critical anonymous-match read path.
+A read-heavy Next.js app over a Supabase Postgres database, implementing `PRD.md` §1.6 (FR1–FR10, all built — FR10 was originally scoped as a deferred Phase 2 item, see §10 for how the source-watcher was built) and §4's v2 feature backlog (FR11–FR22, all built, including FR21's application tracker and FR22's discovery crawler). The differentiating logic is a **deterministic matching engine** (`lib/matching/`) implemented as pure TypeScript functions — no I/O, no LLM, fully unit-tested; FR14's near-miss guidance is curator-authored copy, not model-generated, so this stays true post-v2. Scholarship data is human-curated through an admin tool; deadline status, reminder emails/push, the opt-in digest, and the FR10/FR22 source-watcher and discovery crawlers are driven by five **Vercel Cron**-triggered Route Handlers (not Supabase Edge Functions, see §6). There is no external service on the critical anonymous-match read path.
 
 ## 2. Tech Stack (as installed)
 
@@ -40,6 +40,9 @@ Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
 | `/` | Landing page, static |
 | `/about` | "How it works," static |
 | `/privacy` | RA 10173 privacy notice, static |
+| `/contact` | Contact info, static |
+| `/faq` | Frequently asked questions, static |
+| `/terms` | Terms of use, static |
 | `/trust` | **(FR11)** Public data-freshness dashboard, ISR (1h) |
 | `/scholarships` | **(FR17)** Browse/filter/search without a profile; `searchParams`-driven, zero-JS `<form method="get">` |
 | `/match` | `force-dynamic` (reads auth cookie to decide whether to offer the FR20 digest opt-in); server wrapper around client `match-experience.tsx` (form → results); calls `submitProfileForm` |
@@ -76,8 +79,15 @@ Every admin route calls `requireAdmin()` (`lib/auth/require-admin.ts`) individua
 | `refresh-deadlines` | GET | Recompute `deadline_cycles.status` (FR5) |
 | `send-reminders` | GET | Send due reminder emails via Resend (FR8), plus best-effort Web Push (FR18) |
 | `send-digest` | GET | **(FR20)** Weekly, opt-in-only "new matches for you" digest — re-runs `buildScholarshipMatches` per saved profile, idempotent via `notified_scholarship_ids` |
+| `watch-sources` | GET | **(FR10)** Source-watcher agentic loop — re-verifies published scholarships against their source page, files per-field suggestions for curator review |
+| `discover-sources` | GET | **(FR22)** Discovery crawler — finds new scholarships from registered index pages, files candidates for curator review |
 
-All three require a `CRON_SECRET` bearer token (`lib/security/verify-cron-secret.ts`); scheduled by `vercel.json` (see §6, `DEPLOYMENT.md` §3).
+All five require a `CRON_SECRET` bearer token (`lib/security/verify-cron-secret.ts`); scheduled by `vercel.json` (see §6, `DEPLOYMENT.md` §3). Every hard-failure branch in these five handlers also calls `notifyCronFailure()` (`lib/observability/notify-cron-failure.ts`), which emails an operator via Resend — best-effort, never throws (`SECURITY.md` §3.13).
+
+**Other Route Handlers**
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `/api/health` | GET | Public, unauthenticated. A minimal anon-scoped `scholarships` read; exists as a keep-alive ping target (`.github/workflows/keep-alive.yml`) so the free-tier Supabase project's inactivity auto-pause never triggers (`SECURITY.md` §3.13) |
 
 ## 4. Server Actions (`lib/actions/`)
 
@@ -155,8 +165,8 @@ Full detail lives in `SECURITY.md`; the architecture-relevant summary:
 ## 9. Testing
 
 - **Unit (Vitest, `lib/**/*.test.ts`, `tests/**/*.test.ts`, node env):** full matching-engine coverage, deadline status transitions, URL-allowlist logic, "last verified" staleness logic, Zod schema validation, and an opt-in RLS integration test (`tests/integration/rls.test.ts`, skipped unless `TEST_SUPABASE_URL`/`TEST_SUPABASE_ANON_KEY` are set — runs against a local Supabase stack).
-- **E2E (Playwright, `tests/e2e/`):** `smoke.spec.ts` is deliberately scoped to **DB-independent pages only** (landing, `/match` form rendering + client-side GWA validation, `/about`, `/privacy`, security headers) — DB-backed flows (`/s/[slug]`, `/saved`, `/admin`) are explicitly out of scope today since CI/dev doesn't reliably have a linked Supabase project.
-- **Not covered by any test:** the server actions themselves (only the pure functions they call are unit-tested), the four cron route handlers (incl. the FR10 source-watcher, whose pure P12/P13/P14 functions *are* unit-tested and whose extraction has an opt-in eval), admin CRUD flows end-to-end, and email/push sending. The FR19 `get_shared_saved_list()` RPC and the FR13/anon-write RLS posture were verified manually against a local Supabase stack during development (real anon REST calls, real RLS denial checks) rather than in an automated suite — worth converting into `tests/integration/rls.test.ts` cases.
+- **E2E (Playwright, `tests/e2e/`):** `smoke.spec.ts` is deliberately scoped to **DB-independent pages only** (landing, `/match` form rendering + submission, `/about`, `/privacy`, security headers) — DB-backed flows (`/s/[slug]`, `/saved`, `/admin`) are explicitly out of scope today since CI/dev doesn't reliably have a linked Supabase project. GWA range validation is **server-only** (`lib/actions/match-profile.ts`, via the shared `profileSchema`) — there is no client-side check in `match-form.tsx` — and `smoke.spec.ts` exercises that server round-trip, not a client-side rejection.
+- **Not covered by any test:** the server actions themselves (only the pure functions they call are unit-tested), admin CRUD flows end-to-end, and email/push sending. All five cron route handlers have route-level auth-gate + wiring tests (`app/api/cron/cron-routes.test.ts`); the FR10 source-watcher's and FR22 discovery crawler's pure functions are separately unit-tested, and the FR10 extraction additionally has an opt-in eval. The FR19 `get_shared_saved_list()` RPC and the FR13/anon-write RLS posture were verified manually against a local Supabase stack during development (real anon REST calls, real RLS denial checks) in addition to being covered in `tests/integration/rls.test.ts`.
 
 ## 10. Known Gaps / Divergence from the Original Plan
 
@@ -166,7 +176,7 @@ Full detail lives in `SECURITY.md`; the architecture-relevant summary:
 - **FR22 (discovery of new scholarships) is built** — a weekly Vercel Cron route (`/api/cron/discover-sources`, Node runtime) drives `lib/source-discovery/run-discovery.ts`: for each curator-registered index page (`source_index_pages`, managed at `/admin/source-pages`) it does a robots.txt-gated SSRF-guarded fetch → deterministic anchor extraction from the raw DOM (Readability drops `href`s, so it can't be used here) → change-gate on the link set → LLM link-selection grounded to the anchors we supply → per new detail page (deduped against existing `official_url`s and pending candidates) fetch → normalize → LLM draft extraction → a candidate into `scholarship_candidates`. Curators review at `/admin/discoveries` and **promote** a candidate into a *draft* scholarship via the existing `upsertScholarship` action (never auto-publishes). Reuses the source-watcher fetch/normalize/LLM rails. Pure helpers (`robots`, `dedupe`, `score-candidate`, `slugify`) are unit-tested. Where FR10 keeps existing records current, FR22 grows the catalogue — see `PRD.md` §4.7, `SECURITY.md` §3.11 (crawler posture / robots.txt), `DATABASE.md` §2 (tables).
 - **`/match` is now `force-dynamic`**, not statically prerendered, so it can read the auth cookie for the FR20 digest opt-in — a small latency trade-off (still no external API on the read path) accepted for that one feature.
 - **Web Push (FR18) has no delivery-retry queue** — a failed push is simply dropped for that reminder cycle (email remains the primary, retried-nowhere-either channel); only an *expired* subscription (404/410) is pruned.
-- **No CI** — lint/typecheck/test/build are run manually pre-push per `docs/iskolar-version-control.md`; see `DEPLOYMENT.md` §7.
+- **CI is live** (`.github/workflows/ci.yml`) — lint/typecheck/test/build, a gitleaks secret scan, the RLS integration suite against a booted local Supabase, and a Playwright e2e smoke all run on every push/PR; see `DEPLOYMENT.md` §4, `SECURITY.md` §4.
 
 ## 11. Build Sequence (for reference / future features)
 

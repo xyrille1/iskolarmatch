@@ -7,8 +7,8 @@ import { createMockSupabase, type MockSupabase } from "@/tests/helpers/mock-supa
 // mocked -- this asserts the auth gate and wiring, not the pipeline logic
 // (that's covered by P1-06 and the domain unit tests).
 
-const { runSourceWatcher, runSourceDiscovery, sendReminderEmail, sendDigestEmail, sendPushNotification } = vi.hoisted(
-  () => ({
+const { runSourceWatcher, runSourceDiscovery, sendReminderEmail, sendDigestEmail, sendPushNotification, notifyCronFailure } =
+  vi.hoisted(() => ({
     runSourceWatcher: vi.fn(async () => ({ processed: 0, changed: 0, suggestionsWritten: 0, failures: 0 })),
     runSourceDiscovery: vi.fn(async () => ({
       indexPagesProcessed: 0,
@@ -21,8 +21,8 @@ const { runSourceWatcher, runSourceDiscovery, sendReminderEmail, sendDigestEmail
     sendReminderEmail: vi.fn(async () => {}),
     sendDigestEmail: vi.fn(async () => {}),
     sendPushNotification: vi.fn(async () => {}),
-  })
-);
+    notifyCronFailure: vi.fn(async () => {}),
+  }));
 
 let mockClient: MockSupabase;
 vi.mock("@/lib/supabase/admin", () => ({ createSupabaseAdminClient: vi.fn(() => mockClient) }));
@@ -34,6 +34,7 @@ vi.mock("@/lib/push/send-push-notification", () => ({
   sendPushNotification,
   PushSubscriptionExpiredError: class extends Error {},
 }));
+vi.mock("@/lib/observability/notify-cron-failure", () => ({ notifyCronFailure }));
 
 import { GET as refreshDeadlines } from "./refresh-deadlines/route";
 import { GET as sendReminders } from "./send-reminders/route";
@@ -110,5 +111,68 @@ describe("cron route auth gate", () => {
     const res = await sendDigest(req(SECRET));
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toMatchObject({ profiles: 0, sent: 0 });
+  });
+});
+
+// P0-03 (docs/INFRA-AUDIT-REPORT.md): a hard failure in any cron used to
+// return a bare 500 with no signal outside the Vercel dashboard. Each route
+// now calls notifyCronFailure() from its failure branch(es) -- these tests
+// force each of those branches and assert the alert actually fires, so a
+// regression that silently drops the call is caught here rather than in
+// production three months from now.
+describe("cron failure alerting", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    process.env.CRON_SECRET = SECRET;
+  });
+
+  afterEach(() => {
+    delete process.env.CRON_SECRET;
+  });
+
+  it("refresh-deadlines notifies on a query failure", async () => {
+    mockClient = createMockSupabase({
+      tables: { deadline_cycles: [{ data: null, error: { message: "db down" } }] },
+    });
+    const res = await refreshDeadlines(req(SECRET));
+    expect(res.status).toBe(500);
+    expect(notifyCronFailure).toHaveBeenCalledWith(
+      expect.objectContaining({ cron: "refresh-deadlines" })
+    );
+  });
+
+  it("send-reminders notifies on a query failure", async () => {
+    mockClient = createMockSupabase({ tables: { reminders: [{ data: null, error: { message: "db down" } }] } });
+    const res = await sendReminders(req(SECRET));
+    expect(res.status).toBe(500);
+    expect(notifyCronFailure).toHaveBeenCalledWith(expect.objectContaining({ cron: "send-reminders" }));
+  });
+
+  it("send-digest notifies on a query failure", async () => {
+    mockClient = createMockSupabase({
+      tables: {
+        saved_profiles: [{ data: null, error: { message: "db down" } }],
+        scholarships: [{ data: [], error: null }],
+      },
+    });
+    const res = await sendDigest(req(SECRET));
+    expect(res.status).toBe(500);
+    expect(notifyCronFailure).toHaveBeenCalledWith(expect.objectContaining({ cron: "send-digest" }));
+  });
+
+  it("watch-sources notifies when the source-watcher throws", async () => {
+    mockClient = createMockSupabase();
+    runSourceWatcher.mockRejectedValueOnce(new Error("watcher exploded"));
+    const res = await watchSources(req(SECRET));
+    expect(res.status).toBe(500);
+    expect(notifyCronFailure).toHaveBeenCalledWith({ cron: "watch-sources", reason: "watcher exploded" });
+  });
+
+  it("discover-sources notifies when the discovery run throws", async () => {
+    mockClient = createMockSupabase();
+    runSourceDiscovery.mockRejectedValueOnce(new Error("discovery exploded"));
+    const res = await discoverSources(req(SECRET));
+    expect(res.status).toBe(500);
+    expect(notifyCronFailure).toHaveBeenCalledWith({ cron: "discover-sources", reason: "discovery exploded" });
   });
 });
