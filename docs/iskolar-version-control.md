@@ -96,7 +96,7 @@ supabase/.temp/
 **Prevention:**
 
 - Before every commit that touches config, ask: _does this file contain a real key, token, or credential?_ Grep for `SUPABASE_SERVICE_ROLE`, `RESEND_API_KEY`, `CRON_SECRET`, or any `sk_`/`re_`-style token pattern before staging.
-- Add a lightweight secret scan (e.g., `gitleaks` as a pre-commit hook or CI step) rather than relying on memory alone — this is currently a manual gap since no CI exists yet (`SECURITY.md` §4, `DEPLOYMENT.md` §7).
+- A lightweight secret scan now runs as a CI step (`gitleaks --redact`, the `secret-scan` job in `.github/workflows/ci.yml`, §0) — still grep before staging as the first line of defense; CI is the backstop, not a substitute (`SECURITY.md` §4, `DEPLOYMENT.md` §4).
 - Never paste real keys into commit messages, PR descriptions, or comments "temporarily."
 
 **If a secret is committed anyway:**
@@ -168,7 +168,7 @@ Git rarely loses data permanently as long as nothing has been garbage-collected 
 Not active today (solo dev, direct-to-`main`), but decided in advance so the transition is friction-free:
 
 - All changes land via PR, reviewed before merge — no direct pushes to `main`.
-- `main` is protected: require passing checks (once CI exists) before merge.
+- `main` is protected: require the CI checks (`.github/workflows/ci.yml`, §0) passing before merge.
 - **Squash-merge** feature branches into `main` by default — keeps `main`'s history one-commit-per-feature and legible; the messy in-progress commits stay on the (deleted) feature branch.
 - Migrations and admin/security-relevant changes get an explicit second look, even on a small team — matches the "reviewed before running against the live DB" principle in `DEPLOYMENT.md` §5.
 

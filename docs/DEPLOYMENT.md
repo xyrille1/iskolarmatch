@@ -81,7 +81,7 @@ npm run test:e2e    # playwright test
 npm run db:reset    # supabase db reset (local)
 ```
 
-**No CI is configured** — there is no `.github/workflows/` directory. Per `docs/iskolar-version-control.md`, `lint`/`typecheck`/`test`/`build` must be run manually before every push; a pipeline enforcing this does not exist yet. `.github/dependabot.yml` runs weekly `npm` and `github-actions` dependency-update checks (the latter has nothing to update today since there are no workflows, but the config exists for when CI is added).
+**CI is configured and live** (`.github/workflows/ci.yml`), running on every push to `main` and every pull request with four jobs: `gates` (`npm ci` → `lint` → `typecheck` → `test` → `build`), `secret-scan` (gitleaks, `--redact`), `rls` (boots a local Supabase stack and runs `tests/integration/rls.test.ts` against it, so the RLS suite no longer self-skips in CI), and `e2e` (Playwright smoke). A red gate blocks the PR. Node is pinned to v22 to match local dev. `docs/iskolar-version-control.md` §7 is the manual pre-push checklist — still the first line of defense, with CI as the enforced backstop, not a replacement for running the gates locally first. `.github/dependabot.yml` runs weekly `npm` and `github-actions` dependency-update checks, and its PRs are now merge-safe because CI validates them.
 
 Release flow today is a manual `git push` to the branch Vercel is watching, with Vercel building and deploying automatically. There's no separate approval/staging gate.
 
@@ -102,7 +102,6 @@ Both are easy to miss because the failure mode is silent (no error, no 500 — j
 
 ## 7. Known Gaps
 
-- **No CI/CD pipeline.** QA is a manual pre-push checklist (`docs/iskolar-version-control.md` §7), not an enforced gate — a bad push can reach `main`/production if the checklist is skipped.
 - **No separate staging environment** with its own Supabase project — preview deployments exist but DB-backed routes in them would hit whatever Supabase project is configured, which needs care.
 - **Cron is Vercel-specific.** Migrating hosting providers requires re-implementing the trigger mechanism for `refresh-deadlines`/`send-reminders`/`send-digest`/`watch-sources`/`discover-sources` (the handlers themselves are portable).
 - **Vercel cron/plan limits not yet confirmed for five crons.** The FR22 `discover-sources` job brings the total to five; verify the deployment plan's cron-count and function-duration limits before relying on it (see §3). If the plan is too limited, trigger `discover-sources` (and/or `watch-sources`) from a GitHub Actions scheduled workflow instead — same `CRON_SECRET` bearer. Not a code blocker — the handlers are correct regardless — but a scheduled job that never fires (or times out) fails silently.
