@@ -40,6 +40,9 @@ Hosting:     Vercel (app) + Supabase (data) — see DEPLOYMENT.md
 | `/` | Landing page, static |
 | `/about` | "How it works," static |
 | `/privacy` | RA 10173 privacy notice, static |
+| `/contact` | Contact info, static |
+| `/faq` | Frequently asked questions, static |
+| `/terms` | Terms of use, static |
 | `/trust` | **(FR11)** Public data-freshness dashboard, ISR (1h) |
 | `/scholarships` | **(FR17)** Browse/filter/search without a profile; `searchParams`-driven, zero-JS `<form method="get">` |
 | `/match` | `force-dynamic` (reads auth cookie to decide whether to offer the FR20 digest opt-in); server wrapper around client `match-experience.tsx` (form → results); calls `submitProfileForm` |
@@ -76,8 +79,15 @@ Every admin route calls `requireAdmin()` (`lib/auth/require-admin.ts`) individua
 | `refresh-deadlines` | GET | Recompute `deadline_cycles.status` (FR5) |
 | `send-reminders` | GET | Send due reminder emails via Resend (FR8), plus best-effort Web Push (FR18) |
 | `send-digest` | GET | **(FR20)** Weekly, opt-in-only "new matches for you" digest — re-runs `buildScholarshipMatches` per saved profile, idempotent via `notified_scholarship_ids` |
+| `watch-sources` | GET | **(FR10)** Source-watcher agentic loop — re-verifies published scholarships against their source page, files per-field suggestions for curator review |
+| `discover-sources` | GET | **(FR22)** Discovery crawler — finds new scholarships from registered index pages, files candidates for curator review |
 
-All three require a `CRON_SECRET` bearer token (`lib/security/verify-cron-secret.ts`); scheduled by `vercel.json` (see §6, `DEPLOYMENT.md` §3).
+All five require a `CRON_SECRET` bearer token (`lib/security/verify-cron-secret.ts`); scheduled by `vercel.json` (see §6, `DEPLOYMENT.md` §3). Every hard-failure branch in these five handlers also calls `notifyCronFailure()` (`lib/observability/notify-cron-failure.ts`), which emails an operator via Resend — best-effort, never throws (`SECURITY.md` §3.13).
+
+**Other Route Handlers**
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `/api/health` | GET | Public, unauthenticated. A minimal anon-scoped `scholarships` read; exists as a keep-alive ping target (`.github/workflows/keep-alive.yml`) so the free-tier Supabase project's inactivity auto-pause never triggers (`SECURITY.md` §3.13) |
 
 ## 4. Server Actions (`lib/actions/`)
 
