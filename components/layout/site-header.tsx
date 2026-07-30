@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "@/components/layout/logo-mark";
 
 // Shared slim top bar (UX doc §2/§4.1): wordmark left, wayfinding right.
 // The large stacked nav lives in SiteFooter, so this stays a plain Server
@@ -24,8 +25,8 @@ export function SiteHeader() {
       </a>
 
       <Link href="/" className="flex items-center gap-2 font-sans text-base font-bold tracking-tight sm:text-lg">
-        <span aria-hidden className="h-2 w-2 rounded-full bg-ink" />
-        IskolarMatch
+        <LogoMark className="h-5 w-5 text-ink" />
+        Iskolarly
       </Link>
 
       <nav aria-label="Primary" className="flex items-center gap-5 text-sm sm:gap-6">
