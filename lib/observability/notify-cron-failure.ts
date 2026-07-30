@@ -26,9 +26,9 @@ export async function notifyCronFailure({ cron, reason }: CronFailureContext): P
   try {
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: "IskolarMatch Alerts <alerts@iskolarmatch.app>",
+      from: "Iskolarly Alerts <alerts@iskolarly.app>",
       to: alertEmail,
-      subject: `[IskolarMatch] Cron failed: ${cron}`,
+      subject: `[Iskolarly] Cron failed: ${cron}`,
       text: `The "${cron}" cron failed at ${new Date().toISOString()}.\n\nReason: ${reason}\n\nCheck the Vercel dashboard for full logs.`,
     });
     if (error) {

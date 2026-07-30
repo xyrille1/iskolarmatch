@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseRobots, isPathAllowed, PERMISSIVE_RULES } from "./robots";
 
-const TOKEN = "iskolarmatch-discovery";
+const TOKEN = "iskolarly-discovery";
 
 describe("parseRobots", () => {
   it("returns permissive rules for empty content", () => {
@@ -20,7 +20,7 @@ describe("parseRobots", () => {
       "User-agent: *",
       "Disallow: /",
       "",
-      "User-agent: IskolarMatch-Discovery",
+      "User-agent: Iskolarly-Discovery",
       "Disallow: /admin",
       "Crawl-delay: 3",
     ].join("\n");

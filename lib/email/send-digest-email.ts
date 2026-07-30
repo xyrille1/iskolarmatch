@@ -25,7 +25,7 @@ export async function sendDigestEmail(payload: DigestEmailPayload): Promise<void
   const lines = payload.items.map((item) => `- ${item.title}: ${url}/s/${item.slug}`).join("\n");
 
   const { error } = await resend.emails.send({
-    from: "IskolarMatch <digest@iskolarmatch.app>",
+    from: "Iskolarly <digest@iskolarly.app>",
     to: payload.to,
     subject: `${payload.items.length} new scholarship match${payload.items.length === 1 ? "" : "es"} for you`,
     text: `New scholarships matching your saved profile:\n\n${lines}\n\nManage your saved profile and this digest anytime at ${url}/saved.\n\nAlways confirm details on each scholarship's official site before applying.`,

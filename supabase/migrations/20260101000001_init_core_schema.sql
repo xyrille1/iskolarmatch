@@ -1,4 +1,4 @@
--- Core schema for IskolarMatch P0: providers, scholarships, deadline cycles,
+-- Core schema for Iskolarly P0: providers, scholarships, deadline cycles,
 -- eligibility rules, requirements. See docs/DATABASE.md §2.
 --
 -- student_profiles is intentionally NOT created here: docs/SECURITY.md

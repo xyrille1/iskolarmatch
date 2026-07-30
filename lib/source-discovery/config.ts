@@ -8,11 +8,11 @@
 // this (and honoring robots.txt, see robots.ts) is the "good-citizen crawler"
 // posture the legality requirement depends on (docs/SECURITY.md).
 export const DISCOVERY_USER_AGENT =
-  "IskolarMatch-Discovery/1.0 (+https://iskolarmatch.app/about; scholarship-index-crawler)";
+  "Iskolarly-Discovery/1.0 (+https://iskolarly.app/about; scholarship-index-crawler)";
 
 // The product token robots.txt groups are matched against (the name before the
 // slash in the UA above), lowercased.
-export const DISCOVERY_ROBOTS_TOKEN = "iskolarmatch-discovery";
+export const DISCOVERY_ROBOTS_TOKEN = "iskolarly-discovery";
 
 // Index pages processed per cron tick, oldest-crawled first. Small so the job
 // stays well within the 60s serverless budget (docs/DEPLOYMENT.md §3).
