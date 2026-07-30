@@ -12,7 +12,7 @@ const { checkRateLimit, signInWithOtp } = vi.hoisted(() => ({
 
 vi.mock("@/lib/security/rate-limit", () => ({ checkRateLimit }));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => ({ get: () => "1.2.3.4" })) }));
-vi.mock("@/lib/site-url", () => ({ siteUrl: () => "https://iskolarmatch.app" }));
+vi.mock("@/lib/site-url", () => ({ siteUrl: () => "https://iskolarly.app" }));
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseServerClient: vi.fn(async () => ({ auth: { signInWithOtp } })),
 }));

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LogoMark } from "@/components/layout/logo-mark";
 
 // Admin shell (docs/QA-CHECKLIST.md P2-02/P2-03). Deliberately utilitarian --
 // NOT editorial-skinned (docs/iskolar-ux-design.md §2) -- but built from the
@@ -26,8 +27,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-full flex-col">
       <header className="border-b border-line bg-paper">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-6 py-3">
-          <Link href="/admin" className="text-sm font-semibold tracking-tight text-ink">
-            IskolarMatch <span className="text-muted">· Admin</span>
+          <Link href="/admin" className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-ink">
+            <LogoMark className="h-4 w-4 text-ink" />
+            Iskolarly <span className="text-muted">· Admin</span>
           </Link>
           <nav aria-label="Admin sections" className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
             {NAV.map((item) => (
