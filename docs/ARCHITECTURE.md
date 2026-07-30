@@ -1,4 +1,4 @@
-# IskolarMatch — Architecture
+# Iskolarly — Architecture
 
 _System architecture, matching engine, deadline job, and route/action map for the Philippine scholarship discovery and matching tool. Describes the **current implementation**, not just the original design — see §10 for where it has diverged from the initial plan._
 

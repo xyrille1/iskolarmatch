@@ -1,4 +1,4 @@
-# IskolarMatch — Product Requirements Document
+# Iskolarly — Product Requirements Document
 
 _A Philippine scholarship discovery and matching tool. Matches a student's profile to CHED, DOST-SEI, and local scholarships, tracks deadlines and requirements, and hands users off to official application sources._
 
@@ -26,7 +26,7 @@ These are filled in so you can build without blocking. Change any that are wrong
 
 ## 1.1 Overview
 
-Filipino students lose scholarships they qualify for because the information is scattered across regional CHED pages, DOST-SEI's portal, LGU announcements, foundation sites, and Facebook posts — and because deadlines are easy to miss. The prevailing "solution" is a personal spreadsheet. IskolarMatch replaces the spreadsheet with a single tool that (a) takes a light student profile, (b) returns only the scholarships that student is actually eligible for, ranked by deadline urgency, and (c) tracks deadlines and requirement checklists, linking out to the official application source for each one.
+Filipino students lose scholarships they qualify for because the information is scattered across regional CHED pages, DOST-SEI's portal, LGU announcements, foundation sites, and Facebook posts — and because deadlines are easy to miss. The prevailing "solution" is a personal spreadsheet. Iskolarly replaces the spreadsheet with a single tool that (a) takes a light student profile, (b) returns only the scholarships that student is actually eligible for, ranked by deadline urgency, and (c) tracks deadlines and requirement checklists, linking out to the official application source for each one.
 
 The product's core asset is **verified, current scholarship data**, not the matching algorithm. Every design decision below protects data trust and deadline accuracy.
 

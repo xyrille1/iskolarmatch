@@ -1,6 +1,6 @@
-# IskolarMatch — UI/UX & Frontend Design Spec (Editorial / "Playfight" system)
+# Iskolarly — UI/UX & Frontend Design Spec (Editorial / "Playfight" system)
 
-_Rewritten to follow the exact typographic pairing and layout system of the supplied reference (letsplayfight.com — desktop + mobile). The product substance (flows, trust patterns, accessibility, security-driven UI) is unchanged from the prior spec; the **visual language, typography, layout, and imagery are re-skinned** to the reference and its content re-mapped to IskolarMatch._
+_Rewritten to follow the exact typographic pairing and layout system of the supplied reference (letsplayfight.com — desktop + mobile). The product substance (flows, trust patterns, accessibility, security-driven UI) is unchanged from the prior spec; the **visual language, typography, layout, and imagery are re-skinned** to the reference and its content re-mapped to Iskolarly._
 
 **Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`
 **Owner:** Xyrille · **Stack:** Next.js (App Router, Server Components) + TypeScript + Tailwind · **Target:** mobile-first, WCAG AA
@@ -36,7 +36,7 @@ The reference pairs a **high-contrast editorial serif** (display: "Different is 
 - Serif is used **only** for display: the hero line, section titles, and the stacked primary nav. Never for body or UI.
 - Serif display is **sentence case, often ending in a period** ("Different is Everything." → "Find what you actually qualify for."). Light/Regular weight, tight leading, generous size.
 - Sans carries **everything functional**, plus the small **eyebrow labels** in UPPERCASE with wide tracking ("Recent work" → "Featured scholarships", "What we do" → "What we check").
-- Wordmark "IskolarMatch" is set in the **sans at bold**, small, top-left (mirrors "Playfight").
+- Wordmark "Iskolarly" is set in the **sans at bold**, small, top-left (mirrors "Playfight").
 
 **Type scale (mobile → desktop):**
 
@@ -77,20 +77,20 @@ Faithful to the reference:
 
 - **Asymmetric, gallery-led composition with heavy whitespace.** Content is placed with intention across the width, not centered in a single column. The hero uses scattered placement; sections breathe with large vertical gaps.
 - **Alternating white ↔ black sections.** Light editorial top (hero, intro, "what we check"), then a **black gallery section** ("Featured scholarships"), then a light functional area, closing on a black nav/footer — the reference's exact rhythm.
-- **Marginalia.** Tiny rotated/pinned text at the far left/right edges (the reference's "© 2024" and code strings) → repurposed for IskolarMatch as `© 2026` and a subtle `verified-data` tag. Decorative, `--muted`, non-essential.
+- **Marginalia.** Tiny rotated/pinned text at the far left/right edges (the reference's "© 2024" and code strings) → repurposed for Iskolarly as `© 2026` and a subtle `verified-data` tag. Decorative, `--muted`, non-essential.
 - **Eyebrow + content blocks.** Each block leads with a small uppercase sans eyebrow, then serif or body content (the reference's "What we do", "Recent work").
 - **Pill buttons.** Fully rounded (`border-radius: 999px`), either **outlined** (secondary: "Contact Us", "Playground") or **solid ink** (primary). Sentence case. This is the reference's only button shape — we use it everywhere.
-- **Stacked serif section nav.** Near the footer, large serif links stacked vertically ("Work / Originals / The Studio") → IskolarMatch primary destinations (§2).
+- **Stacked serif section nav.** Near the footer, large serif links stacked vertically ("Work / Originals / The Studio") → Iskolarly primary destinations (§2).
 - **Grid:** 12-col desktop with wide outer margins; single-column mobile stack. Detail/reading content constrained to ~62ch even inside the asymmetric shell.
 
 ### 1.4 Imagery strategy
 
 The reference's images are **creative-project photography** (Frank & Morris, Parks & Beyond…). Scholarships have **no equivalent hero photography**, so:
 
-> **⟡ ADAPTATION 2 — typographic/provider tiles instead of stock photos.** Where the reference places a project photo, IskolarMatch places a **typographic tile**: the scholarship title (serif) over the provider mark/wordmark (CHED, DOST-SEI, UniFAST) on a flat `--noir` or `--surface` field, with the deadline-status dot. This preserves the reference's _gallery layout and card rhythm exactly_, swaps the _content_ to real, honest material (no decorative stock imagery of students), and keeps the page light for 3G/4G. Optional: a single, meaningful, optimized education photo may anchor the hero if you want one warm image — see DECIDE 4a.
+> **⟡ ADAPTATION 2 — typographic/provider tiles instead of stock photos.** Where the reference places a project photo, Iskolarly places a **typographic tile**: the scholarship title (serif) over the provider mark/wordmark (CHED, DOST-SEI, UniFAST) on a flat `--noir` or `--surface` field, with the deadline-status dot. This preserves the reference's _gallery layout and card rhythm exactly_, swaps the _content_ to real, honest material (no decorative stock imagery of students), and keeps the page light for 3G/4G. Optional: a single, meaningful, optimized education photo may anchor the hero if you want one warm image — see DECIDE 4a.
 
 Image mapping:
-| Reference uses | IskolarMatch uses |
+| Reference uses | Iskolarly uses |
 |---|---|
 | Scattered hero photo collage | Restrained hero: serif thesis + 2–3 **provider-mark tiles** + one live-stat tile ("N verified deadlines") placed asymmetrically |
 | "Recent work" project photos | "Featured scholarships" **typographic tiles** (title / provider / status) |
@@ -101,14 +101,14 @@ Image mapping:
 
 Quiet and editorial: a gentle **fade/rise reveal** on section entry, subtle image/tile **scale on hover** (desktop), no pulsing, no auto-carousels. All motion respects `prefers-reduced-motion` and is purely decorative.
 
-### 1.6 Reference → IskolarMatch content map
+### 1.6 Reference → Iskolarly content map
 
-| Reference element                                        | IskolarMatch equivalent                                                                                                                                                                       |
+| Reference element                                        | Iskolarly equivalent                                                                                                                                                                       |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Wordmark "Playfight"                                     | **IskolarMatch** (sans bold, top-left)                                                                                                                                                        |
+| Wordmark "Playfight"                                     | **Iskolarly** (sans bold, top-left)                                                                                                                                                        |
 | Hero serif "Different is Everything."                    | **"Find what you actually qualify for."** (serif, ends in period)                                                                                                                             |
 | Subline "Creative, Story and Production. Made In Utah."  | **"Verified. Deadline-tracked. Built for Filipino students."**                                                                                                                                |
-| Intro "We are Playfight…" + "Fighting for authenticity." | **"IskolarMatch matches you to CHED, DOST-SEI, and local scholarships you actually qualify for — then tracks the deadlines."** + **"Built on verified data. Nothing you don't qualify for."** |
+| Intro "We are Playfight…" + "Fighting for authenticity." | **"Iskolarly matches you to CHED, DOST-SEI, and local scholarships you actually qualify for — then tracks the deadlines."** + **"Built on verified data. Nothing you don't qualify for."** |
 | "What we do" services list                               | **"What we check"** — Education level · GWA · Course field · Region · Income bracket · Special status · Deadlines · Requirements                                                              |
 | "Recent work"                                            | **"Featured scholarships"** (or "Recently verified")                                                                                                                                          |
 | Project card "Frank & Morris / Adventure Safe"           | Scholarship tile "**CHED Merit Scholarship / Commission on Higher Education**"                                                                                                                |
@@ -139,7 +139,7 @@ ADMIN (role-gated, internal — utilitarian, NOT editorial-skinned)
   /admin/suggestions      (Phase 2) ingestion review
 ```
 
-**Navigation:** slim top bar — **IskolarMatch** wordmark left (sans bold), hamburger/menu right (as in the reference). The large **stacked serif nav** ("Find scholarships / Saved / How it works") lives near the footer on black, mirroring "Work / Originals / The Studio". No mega-menu; the app is shallow by design.
+**Navigation:** slim top bar — **Iskolarly** wordmark left (sans bold), hamburger/menu right (as in the reference). The large **stacked serif nav** ("Find scholarships / Saved / How it works") lives near the footer on black, mirroring "Work / Originals / The Studio". No mega-menu; the app is shallow by design.
 
 ---
 
@@ -179,7 +179,7 @@ Mobile wireframes below reflect the reference's whitespace, serif headers, eyebr
 
 ```
 ┌───────────────────────────────┐
-│ IskolarMatch             ☰    │  sans bold wordmark · menu
+│ Iskolarly             ☰    │  sans bold wordmark · menu
 │                               │
 │                               │  ← generous whitespace
 │      Find what you            │  SERIF display XL
@@ -445,7 +445,7 @@ Font and layout are **fixed to the reference** per your instruction. Remaining:
 
 ## Appendix — Adaptation notes (where a literal copy was deliberately changed)
 
-The reference is a **creative studio portfolio**; IskolarMatch is a **trust utility for students, many minors, on slow connections**. Three deliberate departures keep the exact font + layout while serving the product:
+The reference is a **creative studio portfolio**; Iskolarly is a **trust utility for students, many minors, on slow connections**. Three deliberate departures keep the exact font + layout while serving the product:
 
 1. **Functional status color** (§1.2) — pure monochrome can't signal a deadline; a minimal dot+word set is added, used only as small indicators.
 2. **Typographic/provider tiles instead of stock photos** (§1.4) — scholarships have no honest hero photography, and heavy images fight the < 2s / low-bandwidth goal; the gallery _layout_ is identical, the _content_ is real.

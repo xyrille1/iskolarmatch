@@ -195,11 +195,10 @@ input[type="radio"] {
   letter-spacing: -0.01em;
   font-size: 1.125rem;
 }
-.app-splash__dot {
-  height: 0.5rem;
-  width: 0.5rem;
-  border-radius: 9999px;
-  background: var(--ink);
+.app-splash__logo {
+  height: 1.125rem;
+  width: 1.125rem;
+  color: var(--ink);
 }
 .app-splash__bar {
   position: relative;

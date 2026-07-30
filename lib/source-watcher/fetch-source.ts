@@ -124,7 +124,7 @@ export async function fetchSource(rawUrl: string): Promise<FetchSourceResult> {
       response = await fetch(safe.url.href, {
         redirect: "manual",
         signal: controller.signal,
-        headers: { "user-agent": "IskolarMatch-SourceWatcher/1.0 (+https://iskolarmatch.app)" },
+        headers: { "user-agent": "Iskolarly-SourceWatcher/1.0 (+https://iskolarly.app)" },
       });
     } catch (err) {
       clearTimeout(timer);

@@ -7,7 +7,7 @@ import { getPendingCandidateCount } from "@/lib/data/get-discovery-queue";
 import { markVerified } from "@/lib/actions/admin";
 import { verifiedEyebrowLabel } from "@/lib/trust/verified-eyebrow";
 
-export const metadata: Metadata = { title: "Admin — IskolarMatch" };
+export const metadata: Metadata = { title: "Admin — Iskolarly" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {

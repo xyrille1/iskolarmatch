@@ -1,6 +1,6 @@
-# IskolarMatch
+# Iskolarly
 
-A scholarship-finder for Filipino students. Answer a short profile and IskolarMatch
+A scholarship-finder for Filipino students. Answer a short profile and Iskolarly
 matches you against a curated, deadline-aware catalog of scholarships — then lets you
 save the ones you want, track each application, and get reminded before a deadline
 closes. Every listing is grounded in an official source, and an LLM-assisted watcher

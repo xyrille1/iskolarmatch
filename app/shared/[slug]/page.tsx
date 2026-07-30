@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { StatusDot } from "@/components/ui/status-dot";
 import { getSharedSavedList } from "@/lib/data/get-shared-saved-list";
 
-export const metadata: Metadata = { title: "Shared shortlist — IskolarMatch" };
+export const metadata: Metadata = { title: "Shared shortlist — Iskolarly" };
 // Reads a live RPC keyed off the URL slug -- never statically prerenderable.
 export const dynamic = "force-dynamic";
 

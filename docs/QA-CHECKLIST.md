@@ -1,4 +1,4 @@
-# IskolarMatch — QA Fix Checklist
+# Iskolarly — QA Fix Checklist
 
 _The actionable companion to `QA-REPORT.md`. Each item is a self-contained work order: **where**, **what's wrong**, **the fix**, and **done-when** acceptance criteria — so a dev (human or agent) can pick it up cold and not hit surprises._
 
@@ -222,7 +222,7 @@ _The actionable companion to `QA-REPORT.md`. Each item is a self-contained work 
 - **Accepted:** documented residual risk, mitigated by the source allowlist. No action.
 
 ### [P3-10] Replace the boilerplate README · Effort S
-- [x] `README.md` is still create-next-app default. For a portfolio repo, add: what IskolarMatch is, the stack, local setup (`.env.example` → `.env.local`, `supabase` local, `npm run dev`), the QA gates, and a pointer to `docs/`.
+- [x] `README.md` is still create-next-app default. For a portfolio repo, add: what Iskolarly is, the stack, local setup (`.env.example` → `.env.local`, `supabase` local, `npm run dev`), the QA gates, and a pointer to `docs/`.
 - **Resolved** (`4d0d074`): portfolio README — product summary, stack, local setup (`.env.example` → `.env.local`, `supabase start`, `db:reset`, `dev`), the four gates + CI extras, and a `docs/` pointer.
 
 ### [P3-11] Explicit `type` on non-submit buttons · Effort S

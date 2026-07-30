@@ -8,7 +8,7 @@ import { getPublishedScholarships } from "@/lib/data/get-published-scholarships"
 import { filterScholarships } from "@/lib/browse/filter-scholarships";
 import { COVERAGE_TYPES } from "@/lib/types/matching";
 
-export const metadata: Metadata = { title: "Browse scholarships — IskolarMatch" };
+export const metadata: Metadata = { title: "Browse scholarships — Iskolarly" };
 
 // FR17 (docs/PRD.md §4.2): a plain GET <form> so filtering works with zero
 // JS (query-string driven, full navigation) -- consistent with the rest of

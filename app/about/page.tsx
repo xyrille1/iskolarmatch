@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 
-export const metadata: Metadata = { title: "How it works — IskolarMatch" };
+export const metadata: Metadata = { title: "How it works — Iskolarly" };
 
 export default function AboutPage() {
   return (

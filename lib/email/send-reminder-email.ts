@@ -20,7 +20,7 @@ export async function sendReminderEmail(payload: ReminderEmailPayload): Promise<
   const detailUrl = `${siteUrl()}/s/${payload.scholarshipSlug}`;
 
   const { error } = await resend.emails.send({
-    from: "IskolarMatch <reminders@iskolarmatch.app>",
+    from: "Iskolarly <reminders@iskolarly.app>",
     to: payload.to,
     subject: `Deadline coming up: ${payload.scholarshipTitle}`,
     text: `${payload.scholarshipTitle} closes on ${payload.closesAt}.\n\nView details and apply on the official site: ${detailUrl}\n\nAlways confirm details on the official site before applying.`,

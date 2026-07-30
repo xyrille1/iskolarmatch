@@ -58,7 +58,7 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
-          NEXT_PUBLIC_SITE_URL: "https://iskolarmatch.app"
+          NEXT_PUBLIC_SITE_URL: "https://iskolarly.app"
         run: npm run build
 
   # Secret scan -- the version-control doc §5 explicitly calls for this as a

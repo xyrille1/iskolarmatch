@@ -1,8 +1,8 @@
-# IskolarMatch — Whole-System QA Report
+# Iskolarly — Whole-System QA Report
 
 _A full-stack quality assessment: frontend, backend, data pipelines, database, security, tests, and deploy/CI config. Companion to `QA-CHECKLIST.md` (the actionable, prioritized fix list a dev agent can execute against)._
 
-**Repo:** iskolarmatch · **Branch audited:** `sub-xyrille` · **Audit date:** 2026-07-22
+**Repo:** iskolarly · **Branch audited:** `sub-xyrille` · **Audit date:** 2026-07-22
 **Stack:** Next.js 16.2.10 (App Router, Turbopack) · React 19.2.4 · Supabase (SSR + service-role) · Tailwind v4 (CSS-first) · Zod v4 · TypeScript strict · Vitest 4 · Playwright
 
 ---
@@ -29,7 +29,7 @@ The section-by-section findings below are preserved as originally written (verdi
 
 ## 1. Executive summary
 
-IskolarMatch is a disciplined, security-conscious codebase. The pure domain core (matching, deadline, trust, security predicates) is fail-closed and well-tested; every database table has RLS enabled; all five cron endpoints authenticate with a constant-time secret compare; the outbound-fetch pipeline layers real SSRF defenses; and there is **no auto-publish anywhere** — every write to real scholarship data passes a human reviewer and the same validated admin actions. Static-analysis hygiene is excellent: **zero** `TODO`/`FIXME`/`HACK`, `any`, `@ts-ignore`, `console.log`, or `eslint-disable` across `lib/`, `app/`, `components/`, and `tests/`.
+Iskolarly is a disciplined, security-conscious codebase. The pure domain core (matching, deadline, trust, security predicates) is fail-closed and well-tested; every database table has RLS enabled; all five cron endpoints authenticate with a constant-time secret compare; the outbound-fetch pipeline layers real SSRF defenses; and there is **no auto-publish anywhere** — every write to real scholarship data passes a human reviewer and the same validated admin actions. Static-analysis hygiene is excellent: **zero** `TODO`/`FIXME`/`HACK`, `any`, `@ts-ignore`, `console.log`, or `eslint-disable` across `lib/`, `app/`, `components/`, and `tests/`.
 
 The risk is concentrated in three places:
 

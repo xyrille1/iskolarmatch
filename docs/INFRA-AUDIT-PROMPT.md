@@ -1,4 +1,4 @@
-# IskolarMatch — 13-Layer Infrastructure Audit Prompt
+# Iskolarly — 13-Layer Infrastructure Audit Prompt
 
 _A reusable audit prompt covering frontend through availability/recovery, tailored to this repo's
 actual stack (Next.js 16 + Supabase + Vercel + Resend/Groq) rather than generic cloud checklists._
@@ -30,7 +30,7 @@ it on every run rather than assuming it's been fixed just because it was noticed
 ## The prompt
 
 ```
-ROLE: You are auditing IskolarMatch (Next.js 16 App Router + TypeScript + Supabase/Postgres +
+ROLE: You are auditing Iskolarly (Next.js 16 App Router + TypeScript + Supabase/Postgres +
 Tailwind, hosted on Vercel, email via Resend, LLM via Groq/OpenAI-compatible) for production
 readiness across 13 infrastructure layers. This is a solo-dev, free-tier, portfolio-grade app
 serving Filipino students (audience includes minors — RA 10173 applies).

@@ -3,7 +3,7 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 
-export const metadata: Metadata = { title: "Sign in — IskolarMatch" };
+export const metadata: Metadata = { title: "Sign in — Iskolarly" };
 
 interface PageProps {
   searchParams: Promise<{ next?: string }>;

@@ -1,6 +1,6 @@
-# IskolarMatch — Security & Privacy
+# Iskolarly — Security & Privacy
 
-_Threat model, security objectives, and the concrete controls actually implemented for IskolarMatch — a Philippine scholarship discovery and matching tool whose audience includes minors._
+_Threat model, security objectives, and the concrete controls actually implemented for Iskolarly — a Philippine scholarship discovery and matching tool whose audience includes minors._
 
 **Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `iskolar-ux-design.md`
 **Owner:** Xyrille · **Stack:** Next.js + TypeScript + Supabase (Postgres) + Tailwind · **Hosting:** Vercel + Supabase + Resend

@@ -8,6 +8,8 @@
 // Robustness: the node self-fades via a CSS safety animation, so a JS failure
 // or a no-JS visitor is never trapped behind it. `suppressHydrationWarning`
 // covers the rare case where the script toggles a class before hydration.
+import { LogoMark } from "@/components/layout/logo-mark";
+
 const HIDE_SCRIPT = `(function(){
   var s=document.getElementById('app-splash');
   if(!s)return;
@@ -33,8 +35,8 @@ export function AppBootSplash() {
     <>
       <div id="app-splash" role="presentation" aria-hidden="true" suppressHydrationWarning>
         <span className="app-splash__mark">
-          <span className="app-splash__dot" />
-          IskolarMatch
+          <LogoMark className="app-splash__logo" />
+          Iskolarly
         </span>
         <span className="app-splash__bar">
           <span />

@@ -1,4 +1,4 @@
-# IskolarMatch — Database & Row-Level Security
+# Iskolarly — Database & Row-Level Security
 
 _Authoritative schema reference, generated from the actual migrations in `supabase/migrations/`, not from the original pre-code design. RLS gets its own top-level section (§5) because it is the primary access-control mechanism for this app — see `PRD.md` NFR "Security" and `SECURITY.md` SEC-G2._
 
