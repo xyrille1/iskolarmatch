@@ -1,4 +1,4 @@
-# IskolarMatch — 13-Layer Infrastructure Audit Report
+# Iskolarly — 13-Layer Infrastructure Audit Report
 
 _The dated output of running `docs/INFRA-AUDIT-PROMPT.md`. That file is the reusable template — this
 file is a point-in-time result plus the actionable checklist that came out of it. Re-run the prompt

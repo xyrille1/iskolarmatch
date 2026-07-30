@@ -1,4 +1,4 @@
-# IskolarMatch — Deployment
+# Iskolarly — Deployment
 
 _Hosting topology, environment variables, cron scheduling, and release process for the current implementation._
 
