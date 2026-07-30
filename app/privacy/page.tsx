@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 
-export const metadata: Metadata = { title: "Privacy — IskolarMatch" };
+export const metadata: Metadata = { title: "Privacy — Iskolarly" };
 
 export default function PrivacyPage() {
   return (
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
               Signing in only requires an email address -- no password, no other personal details. We use it to
               send you a magic link, to remember which scholarships you saved, and to email you a reminder before
               a deadline you asked about. We don&apos;t ask for anything else, and we never sell or share your
-              email with anyone outside IskolarMatch.
+              email with anyone outside Iskolarly.
             </p>
           </section>
 
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
           <section className="mt-10">
             <h2 className="text-xs font-medium uppercase tracking-[0.12em] text-muted">Disclaimer</h2>
             <p className="mt-2">
-              IskolarMatch is an independent, unofficial tool. We are not affiliated with CHED, DOST-SEI, UniFAST,
+              Iskolarly is an independent, unofficial tool. We are not affiliated with CHED, DOST-SEI, UniFAST,
               or any scholarship provider listed here. Always confirm details on the official site before
               applying.
             </p>

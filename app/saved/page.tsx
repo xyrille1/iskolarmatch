@@ -13,7 +13,7 @@ import { getSavedProfileStatus } from "@/lib/data/get-saved-profile-status";
 import { DigestStatus } from "@/components/saved/digest-status";
 import { siteUrl } from "@/lib/site-url";
 
-export const metadata: Metadata = { title: "Saved — IskolarMatch" };
+export const metadata: Metadata = { title: "Saved — Iskolarly" };
 // Per-user, session-dependent -- never statically prerenderable.
 export const dynamic = "force-dynamic";
 

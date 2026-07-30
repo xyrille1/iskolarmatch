@@ -27,10 +27,10 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const scholarship = await getScholarship(slug);
-  if (!scholarship) return { title: "Scholarship not found — IskolarMatch" };
+  if (!scholarship) return { title: "Scholarship not found — Iskolarly" };
 
   return {
-    title: `${scholarship.title} — IskolarMatch`,
+    title: `${scholarship.title} — Iskolarly`,
     description: scholarship.summary ?? undefined,
   };
 }

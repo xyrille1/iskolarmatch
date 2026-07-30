@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
-  title: "Find your scholarships — IskolarMatch",
+  title: "Find your scholarships — Iskolarly",
 };
 
 // FR20 (docs/PRD.md §4.3): reads the auth cookie to decide whether to offer
