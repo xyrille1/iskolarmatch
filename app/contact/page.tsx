@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 
-export const metadata: Metadata = { title: "Contact — IskolarMatch" };
+export const metadata: Metadata = { title: "Contact — Iskolarly" };
 
 export default function ContactPage() {
   return (
@@ -16,7 +16,7 @@ export default function ContactPage() {
             Get help, or help us.
           </h1>
           <p className="reveal reveal-delay-1 mt-4 text-muted">
-            IskolarMatch is kept accurate by real people. Here&apos;s the fastest way to reach the right one, depending
+            Iskolarly is kept accurate by real people. Here&apos;s the fastest way to reach the right one, depending
             on what you need.
           </p>
 
@@ -63,7 +63,7 @@ export default function ContactPage() {
           </div>
 
           <p className="mt-12 border-t border-line pt-8 text-sm text-muted">
-            IskolarMatch is an independent, student-built project. We&apos;re not a call center -- but every report and
+            Iskolarly is an independent, student-built project. We&apos;re not a call center -- but every report and
             question is read, and it&apos;s how the directory stays trustworthy.
           </p>
         </div>

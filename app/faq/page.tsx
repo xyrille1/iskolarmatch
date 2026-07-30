@@ -4,11 +4,11 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { PillLink } from "@/components/ui/pill";
 
-export const metadata: Metadata = { title: "FAQ — IskolarMatch" };
+export const metadata: Metadata = { title: "FAQ — Iskolarly" };
 
 const FAQS = [
   {
-    q: "Is IskolarMatch free?",
+    q: "Is Iskolarly free?",
     a: "Yes, completely. There's no cost to browse, match, save scholarships, or set deadline reminders.",
   },
   {
@@ -17,7 +17,7 @@ const FAQS = [
   },
   {
     q: "Are you affiliated with CHED, DOST-SEI, or UniFAST?",
-    a: "No. IskolarMatch is independent and unofficial. We link to each provider's own site so you always apply through the official source, never a third-party form.",
+    a: "No. Iskolarly is independent and unofficial. We link to each provider's own site so you always apply through the official source, never a third-party form.",
   },
   {
     q: "How do you keep the information accurate?",
@@ -32,8 +32,8 @@ const FAQS = [
     a: "We check your answers against each scholarship's published eligibility rules deterministically -- no AI guessing. You'll see Eligible, Near-miss (one requirement away), or Not eligible, so you can focus where it counts.",
   },
   {
-    q: "Can I apply through IskolarMatch?",
-    a: "No, and that's on purpose. We send you to the provider's official application page. IskolarMatch helps you find and track scholarships; the provider handles the actual application.",
+    q: "Can I apply through Iskolarly?",
+    a: "No, and that's on purpose. We send you to the provider's official application page. Iskolarly helps you find and track scholarships; the provider handles the actual application.",
   },
   {
     q: "How do reminders work?",
@@ -56,7 +56,7 @@ export default function FaqPage() {
             Frequently asked.
           </h1>
           <p className="reveal reveal-delay-1 mt-4 text-muted">
-            The short version of how IskolarMatch works and what it does with your information.
+            The short version of how Iskolarly works and what it does with your information.
           </p>
 
           <dl className="mt-12 flex flex-col divide-y divide-line">

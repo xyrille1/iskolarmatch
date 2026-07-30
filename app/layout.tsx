@@ -17,13 +17,13 @@ const inter = Inter({
 });
 
 const description =
-  "IskolarMatch matches Filipino students to CHED, DOST-SEI, and local scholarships they actually qualify for, then tracks the deadlines.";
+  "Iskolarly matches Filipino students to CHED, DOST-SEI, and local scholarships they actually qualify for, then tracks the deadlines.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: "IskolarMatch — Find scholarships you actually qualify for",
+  title: "Iskolarly — Find scholarships you actually qualify for",
   description,
-  applicationName: "IskolarMatch",
+  applicationName: "Iskolarly",
   keywords: [
     "scholarships",
     "Philippines",
@@ -34,23 +34,23 @@ export const metadata: Metadata = {
     "financial aid",
     "college scholarships",
   ],
-  authors: [{ name: "IskolarMatch" }],
+  authors: [{ name: "Iskolarly" }],
   alternates: { canonical: "/" },
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
-    siteName: "IskolarMatch",
-    title: "IskolarMatch — Find scholarships you actually qualify for",
+    siteName: "Iskolarly",
+    title: "Iskolarly — Find scholarships you actually qualify for",
     description,
     url: siteUrl(),
     locale: "en_PH",
   },
   twitter: {
     card: "summary_large_image",
-    title: "IskolarMatch — Find scholarships you actually qualify for",
+    title: "Iskolarly — Find scholarships you actually qualify for",
     description,
   },
-  appleWebApp: { capable: true, title: "IskolarMatch", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "Iskolarly", statusBarStyle: "default" },
 };
 
 // Matches app/manifest.ts's theme_color -- browser-chrome and installed-PWA
