@@ -1,10 +1,13 @@
-# IskolarMatch — Working Notes for Claude
+# Iskolarly — Working Notes for Claude
 
 Portfolio-grade scholarship-finder app for Filipino students. Full product/technical/security/UX specs live in `docs/` — read them before proposing architecture or feature changes:
 
 - `docs/PRD.md` — PRD & MVP plan
+- `docs/TRD.md` — technical requirements + verification matrix (companion to ARCHITECTURE.md, not a replacement)
 - `docs/ARCHITECTURE.md` — technical design (Next.js + Supabase + Tailwind)
-- `docs/DATABASE.md` — data models / schema
+- `docs/app-flow.md` — user/curator/system flows through the app (screens & transitions, not routes)
+- `docs/DATABASE.md` — data models / schema (authoritative)
+- `docs/backend-schema.md` — schema quick-reference (ER diagrams + table summary; DATABASE.md is authoritative)
 - `docs/DEPLOYMENT.md` — hosting & deployment
 - `docs/SECURITY.md` — security & privacy requirements (RA 10173, RLS, secrets, link-integrity)
 - `docs/iskolar-ux-design.md` — UI/UX design system

@@ -1,4 +1,4 @@
-# IskolarMatch — Project Dossier
+# Iskolarly — Project Dossier
 
 _Consolidated documentation, metrics, and resume-ready summary. Single source of truth for "what is this project and what does it prove" — the detailed specs it's built from live in [`docs/`](docs/) and are linked throughout._
 
@@ -8,7 +8,7 @@ _Consolidated documentation, metrics, and resume-ready summary. Single source of
 
 ## 1. What it is
 
-IskolarMatch is a scholarship-finder for Filipino students. A student answers a short profile form and gets matched — deterministically, not via an LLM — against a curated, deadline-aware catalog of scholarships, bucketed into **Eligible**, **Near-miss** (fails exactly one rule), and **Not eligible**. Users can save scholarships without an account for the matching itself, and create an account (magic-link email, no passwords) to save listings, track application progress, and get reminded before deadlines.
+Iskolarly is a scholarship-finder for Filipino students. A student answers a short profile form and gets matched — deterministically, not via an LLM — against a curated, deadline-aware catalog of scholarships, bucketed into **Eligible**, **Near-miss** (fails exactly one rule), and **Not eligible**. Users can save scholarships without an account for the matching itself, and create an account (magic-link email, no passwords) to save listings, track application progress, and get reminded before deadlines.
 
 Every published listing is grounded in an official source (`.gov.ph` / `.edu.ph` or a curated allowlist) and carries a `last_verified_at` stamp. An LLM-assisted **source-watcher** and **source-discovery** pipeline keep the catalog fresh and find new scholarships automatically — but nothing is ever auto-published; every AI-drafted change or new candidate sits in a human-approval queue until a curator accepts it.
 
@@ -141,7 +141,7 @@ Every AI-drafted suggestion or discovered candidate is inert data until a human 
 ## 9. Resume-ready summary
 
 **One-liner:**
-> Built IskolarMatch, a full-stack scholarship-matching platform (Next.js 16, Supabase/Postgres, TypeScript) with a deterministic eligibility engine, Postgres RLS as the enforced authorization boundary, and an LLM-assisted content-discovery pipeline gated entirely behind human approval — backed by a 4-stage CI pipeline and a self-commissioned security/QA audit.
+> Built Iskolarly, a full-stack scholarship-matching platform (Next.js 16, Supabase/Postgres, TypeScript) with a deterministic eligibility engine, Postgres RLS as the enforced authorization boundary, and an LLM-assisted content-discovery pipeline gated entirely behind human approval — backed by a 4-stage CI pipeline and a self-commissioned security/QA audit.
 
 **Bullet points (pick per role):**
 
