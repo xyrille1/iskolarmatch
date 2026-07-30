@@ -2,7 +2,7 @@
 export function Disclaimer() {
   return (
     <p className="border-t border-line pt-4 text-sm text-muted">
-      ⚠ Always confirm details on the official site before applying. IskolarMatch is not affiliated with any
+      ⚠ Always confirm details on the official site before applying. Iskolarly is not affiliated with any
       scholarship provider.
     </p>
   );

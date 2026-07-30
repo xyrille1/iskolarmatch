@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { getTrustStats } from "@/lib/data/get-trust-stats";
 import { VERIFIED_STALENESS_DAYS } from "@/lib/trust/verified-eyebrow";
 
-export const metadata: Metadata = { title: "Data freshness — IskolarMatch" };
+export const metadata: Metadata = { title: "Data freshness — Iskolarly" };
 
 // FR11 (docs/PRD.md §4.1): same rendering strategy as the landing page --
 // static shell, one live aggregate read, regenerated hourly rather than
@@ -26,7 +26,7 @@ export default async function TrustPage() {
             Every listing is verified. Here&apos;s the proof.
           </h1>
           <p className="reveal reveal-delay-1 mt-4 text-muted">
-            IskolarMatch never shows a scholarship without a verified date and a link to its official source. These
+            Iskolarly never shows a scholarship without a verified date and a link to its official source. These
             numbers are recomputed as records are curated -- not marketing copy.
           </p>
 
