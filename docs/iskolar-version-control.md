@@ -1,9 +1,9 @@
-# IskolarMatch — Safe Version Control & Repository QA
+# Iskolarly — Safe Version Control & Repository QA
 
 _A practical, error-avoidant git workflow for a solo-dev, portfolio-grade repository. Covers branching, commit hygiene, secrets safety, destructive-command discipline, pre-commit/pre-push QA gates, and recovery procedures._
 
 **Companion to:** `PRD.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DEPLOYMENT.md`, `SECURITY.md`, `iskolar-ux-design.md`
-**Owner:** Xyrille · **Repo:** github.com/xyrille1/iskolarmatch
+**Owner:** Xyrille · **Repo:** github.com/xyrille1/iskolarly
 **Status:** Draft v1 for build
 
 ---
