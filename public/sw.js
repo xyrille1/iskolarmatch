@@ -11,7 +11,7 @@ self.addEventListener("push", (event) => {
     data = {};
   }
 
-  const title = data.title || "IskolarMatch";
+  const title = data.title || "Iskolarly";
   const options = {
     body: data.body || "You have a deadline reminder.",
     data: { url: data.url || "/saved" },

@@ -5,8 +5,8 @@ import type { MetadataRoute } from "next";
 // editorial palette; the SVG mark stays byte-light and scales cleanly.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "IskolarMatch",
-    short_name: "IskolarMatch",
+    name: "Iskolarly",
+    short_name: "Iskolarly",
     description:
       "Find CHED, DOST-SEI, and local scholarships you actually qualify for -- verified, deadline-tracked, built for Filipino students.",
     start_url: "/",
